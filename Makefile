@@ -1,2 +1,2 @@
 introJet:
-	jet -source=sqlite -dsn="/database/database.db" -schema=dvds -path=./.gen
+	jet -dsn="file://\Repositories\remember-them-go\database.db" -path=./gen
