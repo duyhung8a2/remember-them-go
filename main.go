@@ -19,5 +19,5 @@ func main() {
 	}
 	defer db.Close()
 
-	PrintUserBob(db)
+	PrintUserUsingTable(db)
 }

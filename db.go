@@ -5,30 +5,30 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"remember_them/models"
 
 	"github.com/stephenafamo/bob"
-	"github.com/stephenafamo/bob/dialect/sqlite/sm"
 	"github.com/stephenafamo/bob/dialect/sqlite"
+	"github.com/stephenafamo/bob/dialect/sqlite/sm"
 	_ "modernc.org/sqlite"
 )
 
-func InitDB(dbFile string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", dbFile)
+func InitDB(dbFile string) (bob.DB, error) {
+	db, err := bob.Open("sqlite", dbFile)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	bobExec := bob.New(db)
 	ctx := context.Background()
 
 	// Create a table
-	_, err = bobExec.ExecContext(ctx, `
+	_, err = db.ExecContext(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT
 	)`)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
 	// _, err = db.Exec("INSERT INTO users (name) VALUES (?)", "Alice")
@@ -38,6 +38,10 @@ func InitDB(dbFile string) (*sql.DB, error) {
 	// _, err = db.Exec("INSERT INTO users (name) VALUES (?)", "Bob")
 	// if err != nil {
 	// 	return nil, err
+	// }
+	// _, err = db.ExecContext(ctx, "INSERT INTO users (name) VALUES (NULL)")
+	// if err != nil {
+	// 	log.Fatal(err)
 	// }
 
 	return db, nil
@@ -87,4 +91,16 @@ func PrintUserBob(db *sql.DB) {
 	}
 
 	fmt.Println(users)
+}
+
+func PrintUserUsingTable(db bob.DB) {
+	ctx := context.Background()
+	var userTable = models.Users
+	users, err := userTable.Query(ctx, db).All()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, user := range users {
+		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Name.GetOr(""))
+	}
 }
