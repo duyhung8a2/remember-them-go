@@ -19,16 +19,69 @@ func InitDB(dbFile string) (bob.DB, error) {
 		log.Fatal(err)
 	}
 
-	ctx := context.Background()
+	tableStatements := []string{
+		`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username VARCHAR(255),
+            email VARCHAR(255),
+            password VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+		`CREATE TABLE IF NOT EXISTS pages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title VARCHAR(255),
+            parent_id INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parent_id) REFERENCES pages (id) ON DELETE CASCADE
+        )`,
+		`CREATE INDEX IF NOT EXISTS parent_id_index ON pages (parent_id)`,
+		`CREATE TABLE IF NOT EXISTS collaborators (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            page_id INTEGER NOT NULL,
+            permission VARCHAR(124) NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )`,
+		`CREATE TABLE IF NOT EXISTS blocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            page_id INTEGER NOT NULL,
+            type VARCHAR(255) NOT NULL,
+            content TEXT,
+            position INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE
+        )`,
+		`CREATE TABLE IF NOT EXISTS page_properties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            page_id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            value TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE
+        )`,
+		`CREATE TABLE IF NOT EXISTS page_templates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            structure TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+	}
 
-	// Create a table
-	_, err = db.ExecContext(ctx, `
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT
-	)`)
-	if err != nil {
-		log.Fatal(err)
+	ctx := context.Background()
+	for _, stmt := range tableStatements {
+		_, err := db.ExecContext(ctx, stmt)
+		if err != nil {
+			log.Fatal(err)
+		}
+	
 	}
 
 	// _, err = db.Exec("INSERT INTO users (name) VALUES (?)", "Alice")
