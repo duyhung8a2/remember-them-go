@@ -3,7 +3,6 @@ module remember_them
 go 1.22.2
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/stephenafamo/bob v0.25.0
 	modernc.org/sqlite v1.29.7
 )
