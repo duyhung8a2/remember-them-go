@@ -13,15 +13,15 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func ConnectDB(dbFile string) bob.DB {
+func ConnectDB(dbFile string) (*bob.DB, error) {
 	db, err := bob.Open(DBDriver, dbFile)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return db
+	return &db, nil
 }
 
-func InitDB(db bob.DB) {
+func InitDB(db *bob.DB) {
 	tableStatements := []string{
 		`CREATE TABLE IF NOT EXISTS users (
     		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +68,8 @@ func InitDB(db bob.DB) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
-		`INSERT INTO users (username, email, password) VALUES ("duyhung", "duyhung@gmail.com", "duyhung")`,
-		`INSERT INTO pages (user_id, title) VALUES (1, "First page")`,
+		// `INSERT INTO users (username, email, password) VALUES ("duyhung", "duyhung@gmail.com", "duyhung")`,
+		// `INSERT INTO pages (user_id, title) VALUES (1, "First page")`,
 	}
 
 	ctx := context.Background()
@@ -127,9 +127,9 @@ func PrintUserBob(db *sql.DB) {
 	fmt.Println(users)
 }
 
-func PrintUserUsingTable(db bob.DB) {
+func PrintUserUsingTable(db *bob.DB) {
 	ctx := context.Background()
-	var userTable = models.Users
+	userTable := models.Users
 	users, err := userTable.Query(ctx, db).All()
 	if err != nil {
 		log.Fatal(err)
@@ -137,8 +137,4 @@ func PrintUserUsingTable(db bob.DB) {
 	for _, user := range users {
 		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Username.GetOr(""))
 	}
-}
-
-func InitData(db bob.DB) {
-
 }

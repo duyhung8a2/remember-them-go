@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,7 +10,10 @@ import (
 
 func main() {
 	dbFile := "database.db"
-	db := ConnectDB(dbFile)
+	db, err := ConnectDB(dbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
 
 	InitDB(db)
@@ -23,14 +27,15 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	r.Mount("/pages", PageRoutes())
+	pageHandler := NewPageHandler(db)
+
+	r.Mount("/pages", PageRoutes(pageHandler))
 
 	http.ListenAndServe(":3000", r)
 }
 
-func PageRoutes() chi.Router {
+func PageRoutes(pageHandler *PageHandler) chi.Router {
 	r := chi.NewRouter()
-	pageHandler := PageHandler{}
 	r.Get("/", pageHandler.ListPages)
 	r.Post("/", pageHandler.CreatePage)
 	r.Get("/{id}", pageHandler.GetPages)
