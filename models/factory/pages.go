@@ -37,8 +37,8 @@ func (mods PageModSlice) Apply(n *PageTemplate) {
 // all columns are optional and should be set by mods
 type PageTemplate struct {
 	ID        func() int32
-	Title     func() null.Val[string]
-	UserID    func() null.Val[int32]
+	Title     func() string
+	UserID    func() int32
 	ParentID  func() null.Val[int32]
 	CreatedAt func() null.Val[time.Time]
 	UpdatedAt func() null.Val[time.Time]
@@ -152,7 +152,7 @@ func (t PageTemplate) setModelRels(o *models.Page) {
 	if t.r.User != nil {
 		rel := t.r.User.o.toModel()
 		rel.R.Pages = append(rel.R.Pages, o)
-		o.UserID = null.From(rel.ID)
+		o.UserID = rel.ID
 		o.R.User = rel
 	}
 
@@ -186,10 +186,10 @@ func (o PageTemplate) BuildSetter() *models.PageSetter {
 		m.ID = omit.From(o.ID())
 	}
 	if o.Title != nil {
-		m.Title = omitnull.FromNull(o.Title())
+		m.Title = omit.From(o.Title())
 	}
 	if o.UserID != nil {
-		m.UserID = omitnull.FromNull(o.UserID())
+		m.UserID = omit.From(o.UserID())
 	}
 	if o.ParentID != nil {
 		m.ParentID = omitnull.FromNull(o.ParentID())
@@ -240,6 +240,12 @@ func (o PageTemplate) BuildMany(number int) models.PageSlice {
 }
 
 func ensureCreatablePage(m *models.PageSetter) {
+	if m.Title.IsUnset() {
+		m.Title = omit.From(random[string](nil))
+	}
+	if m.UserID.IsUnset() {
+		m.UserID = omit.From(random[int32](nil))
+	}
 }
 
 // insertOptRels creates and inserts any optional the relationships on *models.Page
@@ -275,18 +281,6 @@ func (o *PageTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if err != nil {
 				return ctx, err
 			}
-		}
-	}
-
-	if o.r.User != nil {
-		var rel2 *models.User
-		ctx, rel2, err = o.r.User.o.create(ctx, exec)
-		if err != nil {
-			return ctx, err
-		}
-		err = m.AttachUser(ctx, exec, rel2)
-		if err != nil {
-			return ctx, err
 		}
 	}
 
@@ -335,11 +329,29 @@ func (o *PageTemplate) create(ctx context.Context, exec bob.Executor) (context.C
 	opt := o.BuildSetter()
 	ensureCreatablePage(opt)
 
+	var rel2 *models.User
+	if o.r.User == nil {
+		var ok bool
+		rel2, ok = userCtx.Value(ctx)
+		if !ok {
+			PageMods.WithNewUser().Apply(o)
+		}
+	}
+	if o.r.User != nil {
+		ctx, rel2, err = o.r.User.o.create(ctx, exec)
+		if err != nil {
+			return ctx, nil, err
+		}
+	}
+	opt.UserID = omit.From(rel2.ID)
+
 	m, err := models.Pages.Insert(ctx, exec, opt)
 	if err != nil {
 		return ctx, nil, err
 	}
 	ctx = pageCtx.WithValue(ctx, m)
+
+	m.R.User = rel2
 
 	ctx, err = o.insertOptRels(ctx, exec, m)
 	return ctx, m, err
@@ -429,14 +441,14 @@ func (m pageMods) ensureID(f *faker.Faker) PageMod {
 }
 
 // Set the model columns to this value
-func (m pageMods) Title(val null.Val[string]) PageMod {
+func (m pageMods) Title(val string) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
-		o.Title = func() null.Val[string] { return val }
+		o.Title = func() string { return val }
 	})
 }
 
 // Set the Column from the function
-func (m pageMods) TitleFunc(f func() null.Val[string]) PageMod {
+func (m pageMods) TitleFunc(f func() string) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
 		o.Title = f
 	})
@@ -453,8 +465,8 @@ func (m pageMods) UnsetTitle() PageMod {
 // if faker is nil, a default faker is used
 func (m pageMods) RandomTitle(f *faker.Faker) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
-		o.Title = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Title = func() string {
+			return random[string](f)
 		}
 	})
 }
@@ -465,21 +477,21 @@ func (m pageMods) ensureTitle(f *faker.Faker) PageMod {
 			return
 		}
 
-		o.Title = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Title = func() string {
+			return random[string](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m pageMods) UserID(val null.Val[int32]) PageMod {
+func (m pageMods) UserID(val int32) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
-		o.UserID = func() null.Val[int32] { return val }
+		o.UserID = func() int32 { return val }
 	})
 }
 
 // Set the Column from the function
-func (m pageMods) UserIDFunc(f func() null.Val[int32]) PageMod {
+func (m pageMods) UserIDFunc(f func() int32) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
 		o.UserID = f
 	})
@@ -496,8 +508,8 @@ func (m pageMods) UnsetUserID() PageMod {
 // if faker is nil, a default faker is used
 func (m pageMods) RandomUserID(f *faker.Faker) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
-		o.UserID = func() null.Val[int32] {
-			return randomNull[int32](f)
+		o.UserID = func() int32 {
+			return random[int32](f)
 		}
 	})
 }
@@ -508,8 +520,8 @@ func (m pageMods) ensureUserID(f *faker.Faker) PageMod {
 			return
 		}
 
-		o.UserID = func() null.Val[int32] {
-			return randomNull[int32](f)
+		o.UserID = func() int32 {
+			return random[int32](f)
 		}
 	})
 }

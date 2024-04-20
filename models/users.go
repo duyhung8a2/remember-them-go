@@ -27,9 +27,9 @@ import (
 // User is an object representing the database table.
 type User struct {
 	ID        int32               `db:"id,pk" `
-	Username  null.Val[string]    `db:"username" `
-	Email     null.Val[string]    `db:"email" `
-	Password  null.Val[string]    `db:"password" `
+	Username  string              `db:"username" `
+	Email     string              `db:"email" `
+	Password  string              `db:"password" `
 	CreatedAt null.Val[time.Time] `db:"created_at" `
 	UpdatedAt null.Val[time.Time] `db:"updated_at" `
 
@@ -59,9 +59,9 @@ type userR struct {
 // Generated columns are not included
 type UserSetter struct {
 	ID        omit.Val[int32]         `db:"id,pk"`
-	Username  omitnull.Val[string]    `db:"username"`
-	Email     omitnull.Val[string]    `db:"email"`
-	Password  omitnull.Val[string]    `db:"password"`
+	Username  omit.Val[string]        `db:"username"`
+	Email     omit.Val[string]        `db:"email"`
+	Password  omit.Val[string]        `db:"password"`
 	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
 	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
 }
@@ -100,13 +100,13 @@ func (s UserSetter) Overwrite(t *User) {
 		t.ID, _ = s.ID.Get()
 	}
 	if !s.Username.IsUnset() {
-		t.Username, _ = s.Username.GetNull()
+		t.Username, _ = s.Username.Get()
 	}
 	if !s.Email.IsUnset() {
-		t.Email, _ = s.Email.GetNull()
+		t.Email, _ = s.Email.Get()
 	}
 	if !s.Password.IsUnset() {
-		t.Password, _ = s.Password.GetNull()
+		t.Password, _ = s.Password.Get()
 	}
 	if !s.CreatedAt.IsUnset() {
 		t.CreatedAt, _ = s.CreatedAt.GetNull()
@@ -242,9 +242,9 @@ var UserColumns = struct {
 
 type userWhere[Q sqlite.Filterable] struct {
 	ID        sqlite.WhereMod[Q, int32]
-	Username  sqlite.WhereNullMod[Q, string]
-	Email     sqlite.WhereNullMod[Q, string]
-	Password  sqlite.WhereNullMod[Q, string]
+	Username  sqlite.WhereMod[Q, string]
+	Email     sqlite.WhereMod[Q, string]
+	Password  sqlite.WhereMod[Q, string]
 	CreatedAt sqlite.WhereNullMod[Q, time.Time]
 	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
 }
@@ -252,9 +252,9 @@ type userWhere[Q sqlite.Filterable] struct {
 func UserWhere[Q sqlite.Filterable]() userWhere[Q] {
 	return userWhere[Q]{
 		ID:        sqlite.Where[Q, int32](UserColumns.ID),
-		Username:  sqlite.WhereNull[Q, string](UserColumns.Username),
-		Email:     sqlite.WhereNull[Q, string](UserColumns.Email),
-		Password:  sqlite.WhereNull[Q, string](UserColumns.Password),
+		Username:  sqlite.Where[Q, string](UserColumns.Username),
+		Email:     sqlite.Where[Q, string](UserColumns.Email),
+		Password:  sqlite.Where[Q, string](UserColumns.Password),
 		CreatedAt: sqlite.WhereNull[Q, time.Time](UserColumns.CreatedAt),
 		UpdatedAt: sqlite.WhereNull[Q, time.Time](UserColumns.UpdatedAt),
 	}
@@ -465,7 +465,7 @@ func (os UserSlice) LoadUserPages(ctx context.Context, exec bob.Executor, mods .
 
 	for _, o := range os {
 		for _, rel := range pages {
-			if o.ID != rel.UserID.GetOrZero() {
+			if o.ID != rel.UserID {
 				continue
 			}
 
@@ -480,7 +480,7 @@ func (os UserSlice) LoadUserPages(ctx context.Context, exec bob.Executor, mods .
 
 func insertUserPages0(ctx context.Context, exec bob.Executor, pages1 []*PageSetter, user0 *User) (PageSlice, error) {
 	for i := range pages1 {
-		pages1[i].UserID = omitnull.From(user0.ID)
+		pages1[i].UserID = omit.From(user0.ID)
 	}
 
 	ret, err := Pages.InsertMany(ctx, exec, pages1...)
@@ -493,7 +493,7 @@ func insertUserPages0(ctx context.Context, exec bob.Executor, pages1 []*PageSett
 
 func attachUserPages0(ctx context.Context, exec bob.Executor, count int, pages1 PageSlice, user0 *User) (PageSlice, error) {
 	setter := &PageSetter{
-		UserID: omitnull.From(user0.ID),
+		UserID: omit.From(user0.ID),
 	}
 
 	err := Pages.Update(ctx, exec, setter, pages1...)

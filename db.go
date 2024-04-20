@@ -25,16 +25,16 @@ func InitDB(db *bob.DB) {
 	tableStatements := []string{
 		`CREATE TABLE IF NOT EXISTS users (
     		id INTEGER PRIMARY KEY AUTOINCREMENT,
-        	username VARCHAR(255),
-        	email VARCHAR(255),
-            password VARCHAR(255),
+        	username VARCHAR(255) NOT NULL,
+        	email VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 		`CREATE TABLE IF NOT EXISTS pages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title VARCHAR(255),
-			user_id INTEGER,
+            title VARCHAR(255) NOT NULL,
+			user_id INTEGER NOT NULL,
             parent_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -70,6 +70,7 @@ func InitDB(db *bob.DB) {
         )`,
 		// `INSERT INTO users (username, email, password) VALUES ("duyhung", "duyhung@gmail.com", "duyhung")`,
 		// `INSERT INTO pages (user_id, title) VALUES (1, "First page")`,
+		// `INSERT INTO pages (user_id, title, parent_id) VALUES (2, 'Second Sub Page', 1);`,
 	}
 
 	ctx := context.Background()
@@ -135,6 +136,6 @@ func PrintUserUsingTable(db *bob.DB) {
 		log.Fatal(err)
 	}
 	for _, user := range users {
-		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Username.GetOr(""))
+		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Username)
 	}
 }

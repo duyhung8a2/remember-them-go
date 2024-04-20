@@ -37,9 +37,9 @@ func (mods UserModSlice) Apply(n *UserTemplate) {
 // all columns are optional and should be set by mods
 type UserTemplate struct {
 	ID        func() int32
-	Username  func() null.Val[string]
-	Email     func() null.Val[string]
-	Password  func() null.Val[string]
+	Username  func() string
+	Email     func() string
+	Password  func() string
 	CreatedAt func() null.Val[time.Time]
 	UpdatedAt func() null.Val[time.Time]
 
@@ -110,7 +110,7 @@ func (t UserTemplate) setModelRels(o *models.User) {
 		for _, r := range t.r.Pages {
 			related := r.o.toModels(r.number)
 			for _, rel := range related {
-				rel.UserID = null.From(o.ID)
+				rel.UserID = o.ID
 				rel.R.User = o
 			}
 			rel = append(rel, related...)
@@ -128,13 +128,13 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		m.ID = omit.From(o.ID())
 	}
 	if o.Username != nil {
-		m.Username = omitnull.FromNull(o.Username())
+		m.Username = omit.From(o.Username())
 	}
 	if o.Email != nil {
-		m.Email = omitnull.FromNull(o.Email())
+		m.Email = omit.From(o.Email())
 	}
 	if o.Password != nil {
-		m.Password = omitnull.FromNull(o.Password())
+		m.Password = omit.From(o.Password())
 	}
 	if o.CreatedAt != nil {
 		m.CreatedAt = omitnull.FromNull(o.CreatedAt())
@@ -182,6 +182,15 @@ func (o UserTemplate) BuildMany(number int) models.UserSlice {
 }
 
 func ensureCreatableUser(m *models.UserSetter) {
+	if m.Username.IsUnset() {
+		m.Username = omit.From(random[string](nil))
+	}
+	if m.Email.IsUnset() {
+		m.Email = omit.From(random[string](nil))
+	}
+	if m.Password.IsUnset() {
+		m.Password = omit.From(random[string](nil))
+	}
 }
 
 // insertOptRels creates and inserts any optional the relationships on *models.User
@@ -317,14 +326,14 @@ func (m userMods) ensureID(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) Username(val null.Val[string]) UserMod {
+func (m userMods) Username(val string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Username = func() null.Val[string] { return val }
+		o.Username = func() string { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) UsernameFunc(f func() null.Val[string]) UserMod {
+func (m userMods) UsernameFunc(f func() string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
 		o.Username = f
 	})
@@ -341,8 +350,8 @@ func (m userMods) UnsetUsername() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomUsername(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Username = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Username = func() string {
+			return random[string](f)
 		}
 	})
 }
@@ -353,21 +362,21 @@ func (m userMods) ensureUsername(f *faker.Faker) UserMod {
 			return
 		}
 
-		o.Username = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Username = func() string {
+			return random[string](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m userMods) Email(val null.Val[string]) UserMod {
+func (m userMods) Email(val string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Email = func() null.Val[string] { return val }
+		o.Email = func() string { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) EmailFunc(f func() null.Val[string]) UserMod {
+func (m userMods) EmailFunc(f func() string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
 		o.Email = f
 	})
@@ -384,8 +393,8 @@ func (m userMods) UnsetEmail() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomEmail(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Email = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Email = func() string {
+			return random[string](f)
 		}
 	})
 }
@@ -396,21 +405,21 @@ func (m userMods) ensureEmail(f *faker.Faker) UserMod {
 			return
 		}
 
-		o.Email = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Email = func() string {
+			return random[string](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m userMods) Password(val null.Val[string]) UserMod {
+func (m userMods) Password(val string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Password = func() null.Val[string] { return val }
+		o.Password = func() string { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) PasswordFunc(f func() null.Val[string]) UserMod {
+func (m userMods) PasswordFunc(f func() string) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
 		o.Password = f
 	})
@@ -427,8 +436,8 @@ func (m userMods) UnsetPassword() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomPassword(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Password = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Password = func() string {
+			return random[string](f)
 		}
 	})
 }
@@ -439,8 +448,8 @@ func (m userMods) ensurePassword(f *faker.Faker) UserMod {
 			return
 		}
 
-		o.Password = func() null.Val[string] {
-			return randomNull[string](f)
+		o.Password = func() string {
+			return random[string](f)
 		}
 	})
 }

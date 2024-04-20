@@ -28,8 +28,8 @@ import (
 // Page is an object representing the database table.
 type Page struct {
 	ID        int32               `db:"id,pk" `
-	Title     null.Val[string]    `db:"title" `
-	UserID    null.Val[int32]     `db:"user_id" `
+	Title     string              `db:"title" `
+	UserID    int32               `db:"user_id" `
 	ParentID  null.Val[int32]     `db:"parent_id" `
 	CreatedAt null.Val[time.Time] `db:"created_at" `
 	UpdatedAt null.Val[time.Time] `db:"updated_at" `
@@ -64,8 +64,8 @@ type pageR struct {
 // Generated columns are not included
 type PageSetter struct {
 	ID        omit.Val[int32]         `db:"id,pk"`
-	Title     omitnull.Val[string]    `db:"title"`
-	UserID    omitnull.Val[int32]     `db:"user_id"`
+	Title     omit.Val[string]        `db:"title"`
+	UserID    omit.Val[int32]         `db:"user_id"`
 	ParentID  omitnull.Val[int32]     `db:"parent_id"`
 	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
 	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
@@ -105,10 +105,10 @@ func (s PageSetter) Overwrite(t *Page) {
 		t.ID, _ = s.ID.Get()
 	}
 	if !s.Title.IsUnset() {
-		t.Title, _ = s.Title.GetNull()
+		t.Title, _ = s.Title.Get()
 	}
 	if !s.UserID.IsUnset() {
-		t.UserID, _ = s.UserID.GetNull()
+		t.UserID, _ = s.UserID.Get()
 	}
 	if !s.ParentID.IsUnset() {
 		t.ParentID, _ = s.ParentID.GetNull()
@@ -255,8 +255,8 @@ var PageColumns = struct {
 
 type pageWhere[Q sqlite.Filterable] struct {
 	ID        sqlite.WhereMod[Q, int32]
-	Title     sqlite.WhereNullMod[Q, string]
-	UserID    sqlite.WhereNullMod[Q, int32]
+	Title     sqlite.WhereMod[Q, string]
+	UserID    sqlite.WhereMod[Q, int32]
 	ParentID  sqlite.WhereNullMod[Q, int32]
 	CreatedAt sqlite.WhereNullMod[Q, time.Time]
 	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
@@ -265,8 +265,8 @@ type pageWhere[Q sqlite.Filterable] struct {
 func PageWhere[Q sqlite.Filterable]() pageWhere[Q] {
 	return pageWhere[Q]{
 		ID:        sqlite.Where[Q, int32](PageColumns.ID),
-		Title:     sqlite.WhereNull[Q, string](PageColumns.Title),
-		UserID:    sqlite.WhereNull[Q, int32](PageColumns.UserID),
+		Title:     sqlite.Where[Q, string](PageColumns.Title),
+		UserID:    sqlite.Where[Q, int32](PageColumns.UserID),
 		ParentID:  sqlite.WhereNull[Q, int32](PageColumns.ParentID),
 		CreatedAt: sqlite.WhereNull[Q, time.Time](PageColumns.CreatedAt),
 		UpdatedAt: sqlite.WhereNull[Q, time.Time](PageColumns.UpdatedAt),
@@ -793,7 +793,7 @@ func (os PageSlice) LoadPageUser(ctx context.Context, exec bob.Executor, mods ..
 
 	for _, o := range os {
 		for _, rel := range users {
-			if o.UserID.GetOrZero() != rel.ID {
+			if o.UserID != rel.ID {
 				continue
 			}
 
@@ -1101,7 +1101,7 @@ func (page0 *Page) AttachPageProperties(ctx context.Context, exec bob.Executor, 
 
 func attachPageUser0(ctx context.Context, exec bob.Executor, count int, page0 *Page, user1 *User) (*Page, error) {
 	setter := &PageSetter{
-		UserID: omitnull.From(user1.ID),
+		UserID: omit.From(user1.ID),
 	}
 
 	err := Pages.Update(ctx, exec, setter, page0)
