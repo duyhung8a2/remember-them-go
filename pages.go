@@ -44,8 +44,8 @@ func (b PageHandler) ListPages(w http.ResponseWriter, r *http.Request) {
 			Title:     page.Title,
 			UserID:    page.UserID,
 			ParentID:  page.ParentID,
-			CreatedAt: page.CreatedAt.GetOrZero(),
-			UpdatedAt: page.CreatedAt.GetOrZero(),
+			CreatedAt: page.CreatedAt,
+			UpdatedAt: page.CreatedAt,
 		}
 		pageResponses = append(pageResponses, pageResponse)
 	}

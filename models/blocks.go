@@ -27,13 +27,13 @@ import (
 
 // Block is an object representing the database table.
 type Block struct {
-	ID        int32               `db:"id,pk" `
-	PageID    int32               `db:"page_id" `
-	Type      string              `db:"type" `
-	Content   null.Val[string]    `db:"content" `
-	Position  int32               `db:"position" `
-	CreatedAt null.Val[time.Time] `db:"created_at" `
-	UpdatedAt null.Val[time.Time] `db:"updated_at" `
+	ID        int32            `db:"id,pk" `
+	PageID    int32            `db:"page_id" `
+	Type      string           `db:"type" `
+	Content   null.Val[string] `db:"content" `
+	Position  int32            `db:"position" `
+	CreatedAt time.Time        `db:"created_at" `
+	UpdatedAt time.Time        `db:"updated_at" `
 
 	R blockR `db:"-" `
 }
@@ -60,13 +60,13 @@ type blockR struct {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type BlockSetter struct {
-	ID        omit.Val[int32]         `db:"id,pk"`
-	PageID    omit.Val[int32]         `db:"page_id"`
-	Type      omit.Val[string]        `db:"type"`
-	Content   omitnull.Val[string]    `db:"content"`
-	Position  omit.Val[int32]         `db:"position"`
-	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
-	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
+	ID        omit.Val[int32]      `db:"id,pk"`
+	PageID    omit.Val[int32]      `db:"page_id"`
+	Type      omit.Val[string]     `db:"type"`
+	Content   omitnull.Val[string] `db:"content"`
+	Position  omit.Val[int32]      `db:"position"`
+	CreatedAt omit.Val[time.Time]  `db:"created_at"`
+	UpdatedAt omit.Val[time.Time]  `db:"updated_at"`
 }
 
 func (s BlockSetter) SetColumns() []string {
@@ -119,10 +119,10 @@ func (s BlockSetter) Overwrite(t *Block) {
 		t.Position, _ = s.Position.Get()
 	}
 	if !s.CreatedAt.IsUnset() {
-		t.CreatedAt, _ = s.CreatedAt.GetNull()
+		t.CreatedAt, _ = s.CreatedAt.Get()
 	}
 	if !s.UpdatedAt.IsUnset() {
-		t.UpdatedAt, _ = s.UpdatedAt.GetNull()
+		t.UpdatedAt, _ = s.UpdatedAt.Get()
 	}
 }
 
@@ -270,8 +270,8 @@ type blockWhere[Q sqlite.Filterable] struct {
 	Type      sqlite.WhereMod[Q, string]
 	Content   sqlite.WhereNullMod[Q, string]
 	Position  sqlite.WhereMod[Q, int32]
-	CreatedAt sqlite.WhereNullMod[Q, time.Time]
-	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
+	CreatedAt sqlite.WhereMod[Q, time.Time]
+	UpdatedAt sqlite.WhereMod[Q, time.Time]
 }
 
 func BlockWhere[Q sqlite.Filterable]() blockWhere[Q] {
@@ -281,8 +281,8 @@ func BlockWhere[Q sqlite.Filterable]() blockWhere[Q] {
 		Type:      sqlite.Where[Q, string](BlockColumns.Type),
 		Content:   sqlite.WhereNull[Q, string](BlockColumns.Content),
 		Position:  sqlite.Where[Q, int32](BlockColumns.Position),
-		CreatedAt: sqlite.WhereNull[Q, time.Time](BlockColumns.CreatedAt),
-		UpdatedAt: sqlite.WhereNull[Q, time.Time](BlockColumns.UpdatedAt),
+		CreatedAt: sqlite.Where[Q, time.Time](BlockColumns.CreatedAt),
+		UpdatedAt: sqlite.Where[Q, time.Time](BlockColumns.UpdatedAt),
 	}
 }
 

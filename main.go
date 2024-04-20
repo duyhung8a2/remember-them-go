@@ -9,15 +9,15 @@ import (
 )
 
 func main() {
+	// Init database
 	dbFile := "database.db"
+	schemaFile := "database_schema.sql"
 	db, err := ConnectDB(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	InitDB(db)
-	PrintUserUsingTable(db)
+	InitDB(db, schemaFile)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -32,14 +32,4 @@ func main() {
 	r.Mount("/pages", PageRoutes(pageHandler))
 
 	http.ListenAndServe(":3000", r)
-}
-
-func PageRoutes(pageHandler *PageHandler) chi.Router {
-	r := chi.NewRouter()
-	r.Get("/", pageHandler.ListPages)
-	r.Post("/", pageHandler.CreatePage)
-	r.Get("/{id}", pageHandler.GetPages)
-	r.Put("/{id}", pageHandler.UpdatePage)
-	r.Delete("/{id}", pageHandler.DeletePage)
-	return r
 }

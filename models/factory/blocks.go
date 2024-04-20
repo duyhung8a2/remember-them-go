@@ -41,8 +41,8 @@ type BlockTemplate struct {
 	Type      func() string
 	Content   func() null.Val[string]
 	Position  func() int32
-	CreatedAt func() null.Val[time.Time]
-	UpdatedAt func() null.Val[time.Time]
+	CreatedAt func() time.Time
+	UpdatedAt func() time.Time
 
 	r blockR
 	f *Factory
@@ -137,10 +137,10 @@ func (o BlockTemplate) BuildSetter() *models.BlockSetter {
 		m.Position = omit.From(o.Position())
 	}
 	if o.CreatedAt != nil {
-		m.CreatedAt = omitnull.FromNull(o.CreatedAt())
+		m.CreatedAt = omit.From(o.CreatedAt())
 	}
 	if o.UpdatedAt != nil {
-		m.UpdatedAt = omitnull.FromNull(o.UpdatedAt())
+		m.UpdatedAt = omit.From(o.UpdatedAt())
 	}
 
 	return m
@@ -502,14 +502,14 @@ func (m blockMods) ensurePosition(f *faker.Faker) BlockMod {
 }
 
 // Set the model columns to this value
-func (m blockMods) CreatedAt(val null.Val[time.Time]) BlockMod {
+func (m blockMods) CreatedAt(val time.Time) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] { return val }
+		o.CreatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m blockMods) CreatedAtFunc(f func() null.Val[time.Time]) BlockMod {
+func (m blockMods) CreatedAtFunc(f func() time.Time) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
 		o.CreatedAt = f
 	})
@@ -526,8 +526,8 @@ func (m blockMods) UnsetCreatedAt() BlockMod {
 // if faker is nil, a default faker is used
 func (m blockMods) RandomCreatedAt(f *faker.Faker) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -538,21 +538,21 @@ func (m blockMods) ensureCreatedAt(f *faker.Faker) BlockMod {
 			return
 		}
 
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m blockMods) UpdatedAt(val null.Val[time.Time]) BlockMod {
+func (m blockMods) UpdatedAt(val time.Time) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] { return val }
+		o.UpdatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m blockMods) UpdatedAtFunc(f func() null.Val[time.Time]) BlockMod {
+func (m blockMods) UpdatedAtFunc(f func() time.Time) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
 		o.UpdatedAt = f
 	})
@@ -569,8 +569,8 @@ func (m blockMods) UnsetUpdatedAt() BlockMod {
 // if faker is nil, a default faker is used
 func (m blockMods) RandomUpdatedAt(f *faker.Faker) BlockMod {
 	return BlockModFunc(func(o *BlockTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -581,8 +581,8 @@ func (m blockMods) ensureUpdatedAt(f *faker.Faker) BlockMod {
 			return
 		}
 
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }

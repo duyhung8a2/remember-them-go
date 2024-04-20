@@ -7,9 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
-	"github.com/aarondl/opt/omitnull"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
 	models "remember_them/models"
@@ -40,8 +38,8 @@ type UserTemplate struct {
 	Username  func() string
 	Email     func() string
 	Password  func() string
-	CreatedAt func() null.Val[time.Time]
-	UpdatedAt func() null.Val[time.Time]
+	CreatedAt func() time.Time
+	UpdatedAt func() time.Time
 
 	r userR
 	f *Factory
@@ -137,10 +135,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		m.Password = omit.From(o.Password())
 	}
 	if o.CreatedAt != nil {
-		m.CreatedAt = omitnull.FromNull(o.CreatedAt())
+		m.CreatedAt = omit.From(o.CreatedAt())
 	}
 	if o.UpdatedAt != nil {
-		m.UpdatedAt = omitnull.FromNull(o.UpdatedAt())
+		m.UpdatedAt = omit.From(o.UpdatedAt())
 	}
 
 	return m
@@ -455,14 +453,14 @@ func (m userMods) ensurePassword(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) CreatedAt(val null.Val[time.Time]) UserMod {
+func (m userMods) CreatedAt(val time.Time) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] { return val }
+		o.CreatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) CreatedAtFunc(f func() null.Val[time.Time]) UserMod {
+func (m userMods) CreatedAtFunc(f func() time.Time) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
 		o.CreatedAt = f
 	})
@@ -479,8 +477,8 @@ func (m userMods) UnsetCreatedAt() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomCreatedAt(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -491,21 +489,21 @@ func (m userMods) ensureCreatedAt(f *faker.Faker) UserMod {
 			return
 		}
 
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m userMods) UpdatedAt(val null.Val[time.Time]) UserMod {
+func (m userMods) UpdatedAt(val time.Time) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] { return val }
+		o.UpdatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) UpdatedAtFunc(f func() null.Val[time.Time]) UserMod {
+func (m userMods) UpdatedAtFunc(f func() time.Time) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
 		o.UpdatedAt = f
 	})
@@ -522,8 +520,8 @@ func (m userMods) UnsetUpdatedAt() UserMod {
 // if faker is nil, a default faker is used
 func (m userMods) RandomUpdatedAt(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -534,8 +532,8 @@ func (m userMods) ensureUpdatedAt(f *faker.Faker) UserMod {
 			return
 		}
 
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }

@@ -39,8 +39,8 @@ type PageTemplateTemplate struct {
 	ID        func() int32
 	Name      func() string
 	Structure func() null.Val[string]
-	CreatedAt func() null.Val[time.Time]
-	UpdatedAt func() null.Val[time.Time]
+	CreatedAt func() time.Time
+	UpdatedAt func() time.Time
 
 	f *Factory
 }
@@ -107,10 +107,10 @@ func (o PageTemplateTemplate) BuildSetter() *models.PageTemplateSetter {
 		m.Structure = omitnull.FromNull(o.Structure())
 	}
 	if o.CreatedAt != nil {
-		m.CreatedAt = omitnull.FromNull(o.CreatedAt())
+		m.CreatedAt = omit.From(o.CreatedAt())
 	}
 	if o.UpdatedAt != nil {
-		m.UpdatedAt = omitnull.FromNull(o.UpdatedAt())
+		m.UpdatedAt = omit.From(o.UpdatedAt())
 	}
 
 	return m
@@ -360,14 +360,14 @@ func (m pageTemplateMods) ensureStructure(f *faker.Faker) PageTemplateMod {
 }
 
 // Set the model columns to this value
-func (m pageTemplateMods) CreatedAt(val null.Val[time.Time]) PageTemplateMod {
+func (m pageTemplateMods) CreatedAt(val time.Time) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] { return val }
+		o.CreatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m pageTemplateMods) CreatedAtFunc(f func() null.Val[time.Time]) PageTemplateMod {
+func (m pageTemplateMods) CreatedAtFunc(f func() time.Time) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
 		o.CreatedAt = f
 	})
@@ -384,8 +384,8 @@ func (m pageTemplateMods) UnsetCreatedAt() PageTemplateMod {
 // if faker is nil, a default faker is used
 func (m pageTemplateMods) RandomCreatedAt(f *faker.Faker) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -396,21 +396,21 @@ func (m pageTemplateMods) ensureCreatedAt(f *faker.Faker) PageTemplateMod {
 			return
 		}
 
-		o.CreatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.CreatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
 
 // Set the model columns to this value
-func (m pageTemplateMods) UpdatedAt(val null.Val[time.Time]) PageTemplateMod {
+func (m pageTemplateMods) UpdatedAt(val time.Time) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] { return val }
+		o.UpdatedAt = func() time.Time { return val }
 	})
 }
 
 // Set the Column from the function
-func (m pageTemplateMods) UpdatedAtFunc(f func() null.Val[time.Time]) PageTemplateMod {
+func (m pageTemplateMods) UpdatedAtFunc(f func() time.Time) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
 		o.UpdatedAt = f
 	})
@@ -427,8 +427,8 @@ func (m pageTemplateMods) UnsetUpdatedAt() PageTemplateMod {
 // if faker is nil, a default faker is used
 func (m pageTemplateMods) RandomUpdatedAt(f *faker.Faker) PageTemplateMod {
 	return PageTemplateModFunc(func(o *PageTemplateTemplate) {
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }
@@ -439,8 +439,8 @@ func (m pageTemplateMods) ensureUpdatedAt(f *faker.Faker) PageTemplateMod {
 			return
 		}
 
-		o.UpdatedAt = func() null.Val[time.Time] {
-			return randomNull[time.Time](f)
+		o.UpdatedAt = func() time.Time {
+			return random[time.Time](f)
 		}
 	})
 }

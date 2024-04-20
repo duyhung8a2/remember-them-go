@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"remember_them/models"
+	"strings"
 
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/sqlite"
@@ -21,60 +23,20 @@ func ConnectDB(dbFile string) (*bob.DB, error) {
 	return &db, nil
 }
 
-func InitDB(db *bob.DB) {
-	tableStatements := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-    		id INTEGER PRIMARY KEY AUTOINCREMENT,
-        	username VARCHAR(255) NOT NULL,
-        	email VARCHAR(255) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`,
-		`CREATE TABLE IF NOT EXISTS pages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title VARCHAR(255) NOT NULL,
-			user_id INTEGER NOT NULL,
-            parent_id INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES pages (id) ON DELETE CASCADE,
-			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )`,
-		`CREATE INDEX IF NOT EXISTS parent_id_index ON pages (parent_id)`,
-		`CREATE TABLE IF NOT EXISTS blocks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            page_id INTEGER NOT NULL,
-            type VARCHAR(255) NOT NULL,
-            content TEXT,
-            position INTEGER NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE
-        )`,
-		`CREATE TABLE IF NOT EXISTS page_properties (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            page_id INTEGER NOT NULL,
-            name VARCHAR(255) NOT NULL,
-            value TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE
-        )`,
-		`CREATE TABLE IF NOT EXISTS page_templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name VARCHAR(255) NOT NULL,
-            structure TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`,
-		// `INSERT INTO users (username, email, password) VALUES ("duyhung", "duyhung@gmail.com", "duyhung")`,
-		// `INSERT INTO pages (user_id, title) VALUES (1, "First page")`,
-		// `INSERT INTO pages (user_id, title, parent_id) VALUES (2, 'Second Sub Page', 1);`,
+func InitDB(db *bob.DB, sqlFileString string) {
+	content, err := os.ReadFile(sqlFileString)
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	statements := strings.Split(string(content), ";\n")
+
 	ctx := context.Background()
-	for _, stmt := range tableStatements {
+	for _, stmt := range statements {
+		stmt = strings.TrimSpace(stmt)
+		if stmt == "" {
+			continue
+		}
 		_, err := db.ExecContext(ctx, stmt)
 		if err != nil {
 			log.Fatal(err)

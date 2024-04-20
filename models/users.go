@@ -10,9 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
-	"github.com/aarondl/opt/omitnull"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/clause"
 	"github.com/stephenafamo/bob/dialect/sqlite"
@@ -26,12 +24,12 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID        int32               `db:"id,pk" `
-	Username  string              `db:"username" `
-	Email     string              `db:"email" `
-	Password  string              `db:"password" `
-	CreatedAt null.Val[time.Time] `db:"created_at" `
-	UpdatedAt null.Val[time.Time] `db:"updated_at" `
+	ID        int32     `db:"id,pk" `
+	Username  string    `db:"username" `
+	Email     string    `db:"email" `
+	Password  string    `db:"password" `
+	CreatedAt time.Time `db:"created_at" `
+	UpdatedAt time.Time `db:"updated_at" `
 
 	R userR `db:"-" `
 }
@@ -58,12 +56,12 @@ type userR struct {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type UserSetter struct {
-	ID        omit.Val[int32]         `db:"id,pk"`
-	Username  omit.Val[string]        `db:"username"`
-	Email     omit.Val[string]        `db:"email"`
-	Password  omit.Val[string]        `db:"password"`
-	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
-	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
+	ID        omit.Val[int32]     `db:"id,pk"`
+	Username  omit.Val[string]    `db:"username"`
+	Email     omit.Val[string]    `db:"email"`
+	Password  omit.Val[string]    `db:"password"`
+	CreatedAt omit.Val[time.Time] `db:"created_at"`
+	UpdatedAt omit.Val[time.Time] `db:"updated_at"`
 }
 
 func (s UserSetter) SetColumns() []string {
@@ -109,10 +107,10 @@ func (s UserSetter) Overwrite(t *User) {
 		t.Password, _ = s.Password.Get()
 	}
 	if !s.CreatedAt.IsUnset() {
-		t.CreatedAt, _ = s.CreatedAt.GetNull()
+		t.CreatedAt, _ = s.CreatedAt.Get()
 	}
 	if !s.UpdatedAt.IsUnset() {
-		t.UpdatedAt, _ = s.UpdatedAt.GetNull()
+		t.UpdatedAt, _ = s.UpdatedAt.Get()
 	}
 }
 
@@ -245,8 +243,8 @@ type userWhere[Q sqlite.Filterable] struct {
 	Username  sqlite.WhereMod[Q, string]
 	Email     sqlite.WhereMod[Q, string]
 	Password  sqlite.WhereMod[Q, string]
-	CreatedAt sqlite.WhereNullMod[Q, time.Time]
-	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
+	CreatedAt sqlite.WhereMod[Q, time.Time]
+	UpdatedAt sqlite.WhereMod[Q, time.Time]
 }
 
 func UserWhere[Q sqlite.Filterable]() userWhere[Q] {
@@ -255,8 +253,8 @@ func UserWhere[Q sqlite.Filterable]() userWhere[Q] {
 		Username:  sqlite.Where[Q, string](UserColumns.Username),
 		Email:     sqlite.Where[Q, string](UserColumns.Email),
 		Password:  sqlite.Where[Q, string](UserColumns.Password),
-		CreatedAt: sqlite.WhereNull[Q, time.Time](UserColumns.CreatedAt),
-		UpdatedAt: sqlite.WhereNull[Q, time.Time](UserColumns.UpdatedAt),
+		CreatedAt: sqlite.Where[Q, time.Time](UserColumns.CreatedAt),
+		UpdatedAt: sqlite.Where[Q, time.Time](UserColumns.UpdatedAt),
 	}
 }
 

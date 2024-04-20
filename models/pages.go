@@ -27,12 +27,12 @@ import (
 
 // Page is an object representing the database table.
 type Page struct {
-	ID        int32               `db:"id,pk" `
-	Title     string              `db:"title" `
-	UserID    int32               `db:"user_id" `
-	ParentID  null.Val[int32]     `db:"parent_id" `
-	CreatedAt null.Val[time.Time] `db:"created_at" `
-	UpdatedAt null.Val[time.Time] `db:"updated_at" `
+	ID        int32           `db:"id,pk" `
+	Title     string          `db:"title" `
+	UserID    int32           `db:"user_id" `
+	ParentID  null.Val[int32] `db:"parent_id" `
+	CreatedAt time.Time       `db:"created_at" `
+	UpdatedAt time.Time       `db:"updated_at" `
 
 	R pageR `db:"-" `
 }
@@ -63,12 +63,12 @@ type pageR struct {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type PageSetter struct {
-	ID        omit.Val[int32]         `db:"id,pk"`
-	Title     omit.Val[string]        `db:"title"`
-	UserID    omit.Val[int32]         `db:"user_id"`
-	ParentID  omitnull.Val[int32]     `db:"parent_id"`
-	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
-	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
+	ID        omit.Val[int32]     `db:"id,pk"`
+	Title     omit.Val[string]    `db:"title"`
+	UserID    omit.Val[int32]     `db:"user_id"`
+	ParentID  omitnull.Val[int32] `db:"parent_id"`
+	CreatedAt omit.Val[time.Time] `db:"created_at"`
+	UpdatedAt omit.Val[time.Time] `db:"updated_at"`
 }
 
 func (s PageSetter) SetColumns() []string {
@@ -114,10 +114,10 @@ func (s PageSetter) Overwrite(t *Page) {
 		t.ParentID, _ = s.ParentID.GetNull()
 	}
 	if !s.CreatedAt.IsUnset() {
-		t.CreatedAt, _ = s.CreatedAt.GetNull()
+		t.CreatedAt, _ = s.CreatedAt.Get()
 	}
 	if !s.UpdatedAt.IsUnset() {
-		t.UpdatedAt, _ = s.UpdatedAt.GetNull()
+		t.UpdatedAt, _ = s.UpdatedAt.Get()
 	}
 }
 
@@ -258,8 +258,8 @@ type pageWhere[Q sqlite.Filterable] struct {
 	Title     sqlite.WhereMod[Q, string]
 	UserID    sqlite.WhereMod[Q, int32]
 	ParentID  sqlite.WhereNullMod[Q, int32]
-	CreatedAt sqlite.WhereNullMod[Q, time.Time]
-	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
+	CreatedAt sqlite.WhereMod[Q, time.Time]
+	UpdatedAt sqlite.WhereMod[Q, time.Time]
 }
 
 func PageWhere[Q sqlite.Filterable]() pageWhere[Q] {
@@ -268,8 +268,8 @@ func PageWhere[Q sqlite.Filterable]() pageWhere[Q] {
 		Title:     sqlite.Where[Q, string](PageColumns.Title),
 		UserID:    sqlite.Where[Q, int32](PageColumns.UserID),
 		ParentID:  sqlite.WhereNull[Q, int32](PageColumns.ParentID),
-		CreatedAt: sqlite.WhereNull[Q, time.Time](PageColumns.CreatedAt),
-		UpdatedAt: sqlite.WhereNull[Q, time.Time](PageColumns.UpdatedAt),
+		CreatedAt: sqlite.Where[Q, time.Time](PageColumns.CreatedAt),
+		UpdatedAt: sqlite.Where[Q, time.Time](PageColumns.UpdatedAt),
 	}
 }
 

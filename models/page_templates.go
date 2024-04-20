@@ -21,11 +21,11 @@ import (
 
 // PageTemplate is an object representing the database table.
 type PageTemplate struct {
-	ID        int32               `db:"id,pk" `
-	Name      string              `db:"name" `
-	Structure null.Val[string]    `db:"structure" `
-	CreatedAt null.Val[time.Time] `db:"created_at" `
-	UpdatedAt null.Val[time.Time] `db:"updated_at" `
+	ID        int32            `db:"id,pk" `
+	Name      string           `db:"name" `
+	Structure null.Val[string] `db:"structure" `
+	CreatedAt time.Time        `db:"created_at" `
+	UpdatedAt time.Time        `db:"updated_at" `
 }
 
 // PageTemplateSlice is an alias for a slice of pointers to PageTemplate.
@@ -45,11 +45,11 @@ type PageTemplatesStmt = bob.QueryStmt[*PageTemplate, PageTemplateSlice]
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type PageTemplateSetter struct {
-	ID        omit.Val[int32]         `db:"id,pk"`
-	Name      omit.Val[string]        `db:"name"`
-	Structure omitnull.Val[string]    `db:"structure"`
-	CreatedAt omitnull.Val[time.Time] `db:"created_at"`
-	UpdatedAt omitnull.Val[time.Time] `db:"updated_at"`
+	ID        omit.Val[int32]      `db:"id,pk"`
+	Name      omit.Val[string]     `db:"name"`
+	Structure omitnull.Val[string] `db:"structure"`
+	CreatedAt omit.Val[time.Time]  `db:"created_at"`
+	UpdatedAt omit.Val[time.Time]  `db:"updated_at"`
 }
 
 func (s PageTemplateSetter) SetColumns() []string {
@@ -88,10 +88,10 @@ func (s PageTemplateSetter) Overwrite(t *PageTemplate) {
 		t.Structure, _ = s.Structure.GetNull()
 	}
 	if !s.CreatedAt.IsUnset() {
-		t.CreatedAt, _ = s.CreatedAt.GetNull()
+		t.CreatedAt, _ = s.CreatedAt.Get()
 	}
 	if !s.UpdatedAt.IsUnset() {
-		t.UpdatedAt, _ = s.UpdatedAt.GetNull()
+		t.UpdatedAt, _ = s.UpdatedAt.Get()
 	}
 }
 
@@ -191,8 +191,8 @@ type pageTemplateWhere[Q sqlite.Filterable] struct {
 	ID        sqlite.WhereMod[Q, int32]
 	Name      sqlite.WhereMod[Q, string]
 	Structure sqlite.WhereNullMod[Q, string]
-	CreatedAt sqlite.WhereNullMod[Q, time.Time]
-	UpdatedAt sqlite.WhereNullMod[Q, time.Time]
+	CreatedAt sqlite.WhereMod[Q, time.Time]
+	UpdatedAt sqlite.WhereMod[Q, time.Time]
 }
 
 func PageTemplateWhere[Q sqlite.Filterable]() pageTemplateWhere[Q] {
@@ -200,8 +200,8 @@ func PageTemplateWhere[Q sqlite.Filterable]() pageTemplateWhere[Q] {
 		ID:        sqlite.Where[Q, int32](PageTemplateColumns.ID),
 		Name:      sqlite.Where[Q, string](PageTemplateColumns.Name),
 		Structure: sqlite.WhereNull[Q, string](PageTemplateColumns.Structure),
-		CreatedAt: sqlite.WhereNull[Q, time.Time](PageTemplateColumns.CreatedAt),
-		UpdatedAt: sqlite.WhereNull[Q, time.Time](PageTemplateColumns.UpdatedAt),
+		CreatedAt: sqlite.Where[Q, time.Time](PageTemplateColumns.CreatedAt),
+		UpdatedAt: sqlite.Where[Q, time.Time](PageTemplateColumns.UpdatedAt),
 	}
 }
 
