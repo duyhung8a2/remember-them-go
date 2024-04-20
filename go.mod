@@ -4,6 +4,7 @@ go 1.22.2
 
 require (
 	github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/google/go-cmp v0.5.9
 	github.com/jaswdr/faker/v2 v2.1.0
 	github.com/stephenafamo/bob v0.25.0

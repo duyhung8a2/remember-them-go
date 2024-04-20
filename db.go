@@ -13,17 +13,20 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func InitDB(dbFile string) (bob.DB, error) {
-	db, err := bob.Open("sqlite", dbFile)
+func ConnectDB(dbFile string) bob.DB {
+	db, err := bob.Open(DBDriver, dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return db
+}
 
+func InitDB(db bob.DB) {
 	tableStatements := []string{
 		`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username VARCHAR(255),
-            email VARCHAR(255),
+    		id INTEGER PRIMARY KEY AUTOINCREMENT,
+        	username VARCHAR(255),
+        	email VARCHAR(255),
             password VARCHAR(255),
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -31,22 +34,14 @@ func InitDB(dbFile string) (bob.DB, error) {
 		`CREATE TABLE IF NOT EXISTS pages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title VARCHAR(255),
+			user_id INTEGER,
             parent_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES pages (id) ON DELETE CASCADE
+            FOREIGN KEY (parent_id) REFERENCES pages (id) ON DELETE CASCADE,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         )`,
 		`CREATE INDEX IF NOT EXISTS parent_id_index ON pages (parent_id)`,
-		`CREATE TABLE IF NOT EXISTS collaborators (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            page_id INTEGER NOT NULL,
-            permission VARCHAR(124) NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (page_id) REFERENCES pages (id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )`,
 		`CREATE TABLE IF NOT EXISTS blocks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             page_id INTEGER NOT NULL,
@@ -73,6 +68,8 @@ func InitDB(dbFile string) (bob.DB, error) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
+		`INSERT INTO users (username, email, password) VALUES ("duyhung", "duyhung@gmail.com", "duyhung")`,
+		`INSERT INTO pages (user_id, title) VALUES (1, "First page")`,
 	}
 
 	ctx := context.Background()
@@ -81,23 +78,7 @@ func InitDB(dbFile string) (bob.DB, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
-	
 	}
-
-	// _, err = db.Exec("INSERT INTO users (name) VALUES (?)", "Alice")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// _, err = db.Exec("INSERT INTO users (name) VALUES (?)", "Bob")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// _, err = db.ExecContext(ctx, "INSERT INTO users (name) VALUES (NULL)")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	return db, nil
 }
 
 func PrintUserRaw(db *sql.DB) {
@@ -132,11 +113,11 @@ func PrintUserBob(db *sql.DB) {
 		log.Fatal(err)
 	}
 
-	var users []User
+	var users []models.User
 
 	for rows.Next() {
-		var user User
-		err := rows.Scan(&user.ID, &user.Name)
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -154,6 +135,10 @@ func PrintUserUsingTable(db bob.DB) {
 		log.Fatal(err)
 	}
 	for _, user := range users {
-		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Name.GetOr(""))
+		fmt.Printf("ID: %d, Name: %s\n", user.ID, user.Username.GetOr(""))
 	}
+}
+
+func InitData(db bob.DB) {
+
 }

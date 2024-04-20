@@ -11,17 +11,65 @@ import (
 )
 
 var TableNames = struct {
-	Users string
+	Blocks         string
+	PageProperties string
+	PageTemplates  string
+	Pages          string
+	Users          string
 }{
-	Users: "users",
+	Blocks:         "blocks",
+	PageProperties: "page_properties",
+	PageTemplates:  "page_templates",
+	Pages:          "pages",
+	Users:          "users",
 }
 
 var ColumnNames = struct {
-	Users userColumnNames
+	Blocks         blockColumnNames
+	PageProperties pagePropertyColumnNames
+	PageTemplates  pageTemplateColumnNames
+	Pages          pageColumnNames
+	Users          userColumnNames
 }{
+	Blocks: blockColumnNames{
+		ID:        "id",
+		PageID:    "page_id",
+		Type:      "type",
+		Content:   "content",
+		Position:  "position",
+		CreatedAt: "created_at",
+		UpdatedAt: "updated_at",
+	},
+	PageProperties: pagePropertyColumnNames{
+		ID:        "id",
+		PageID:    "page_id",
+		Name:      "name",
+		Value:     "value",
+		CreatedAt: "created_at",
+		UpdatedAt: "updated_at",
+	},
+	PageTemplates: pageTemplateColumnNames{
+		ID:        "id",
+		Name:      "name",
+		Structure: "structure",
+		CreatedAt: "created_at",
+		UpdatedAt: "updated_at",
+	},
+	Pages: pageColumnNames{
+		ID:        "id",
+		Title:     "title",
+		UserID:    "user_id",
+		ParentID:  "parent_id",
+		CreatedAt: "created_at",
+		UpdatedAt: "updated_at",
+	},
 	Users: userColumnNames{
-		ID:   "id",
-		Name: "name",
+		ID:        "id",
+		Username:  "username",
+		Email:     "email",
+		Password:  "password",
+		CreatedAt: "created_at",
+		UpdatedAt: "updated_at",
 	},
 }
 
@@ -33,12 +81,24 @@ var (
 )
 
 func Where[Q sqlite.Filterable]() struct {
-	Users userWhere[Q]
+	Blocks         blockWhere[Q]
+	PageProperties pagePropertyWhere[Q]
+	PageTemplates  pageTemplateWhere[Q]
+	Pages          pageWhere[Q]
+	Users          userWhere[Q]
 } {
 	return struct {
-		Users userWhere[Q]
+		Blocks         blockWhere[Q]
+		PageProperties pagePropertyWhere[Q]
+		PageTemplates  pageTemplateWhere[Q]
+		Pages          pageWhere[Q]
+		Users          userWhere[Q]
 	}{
-		Users: UserWhere[Q](),
+		Blocks:         BlockWhere[Q](),
+		PageProperties: PagePropertyWhere[Q](),
+		PageTemplates:  PageTemplateWhere[Q](),
+		Pages:          PageWhere[Q](),
+		Users:          UserWhere[Q](),
 	}
 }
 
@@ -53,8 +113,18 @@ type joinSet[Q any] struct {
 	RightJoin Q
 }
 
-type joins[Q dialect.Joinable] struct{}
+type joins[Q dialect.Joinable] struct {
+	Blocks         joinSet[blockRelationshipJoins[Q]]
+	PageProperties joinSet[pagePropertyRelationshipJoins[Q]]
+	Pages          joinSet[pageRelationshipJoins[Q]]
+	Users          joinSet[userRelationshipJoins[Q]]
+}
 
 func getJoins[Q dialect.Joinable](ctx context.Context) joins[Q] {
-	return joins[Q]{}
+	return joins[Q]{
+		Blocks:         blocksJoin[Q](ctx),
+		PageProperties: pagePropertiesJoin[Q](ctx),
+		Pages:          pagesJoin[Q](ctx),
+		Users:          usersJoin[Q](ctx),
+	}
 }

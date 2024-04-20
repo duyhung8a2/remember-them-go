@@ -5,6 +5,7 @@ package factory
 
 import (
 	"context"
+	"time"
 
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
@@ -35,10 +36,24 @@ func (mods UserModSlice) Apply(n *UserTemplate) {
 // UserTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type UserTemplate struct {
-	ID   func() int32
-	Name func() null.Val[string]
+	ID        func() int32
+	Username  func() null.Val[string]
+	Email     func() null.Val[string]
+	Password  func() null.Val[string]
+	CreatedAt func() null.Val[time.Time]
+	UpdatedAt func() null.Val[time.Time]
 
+	r userR
 	f *Factory
+}
+
+type userR struct {
+	Pages []*userRPagesR
+}
+
+type userRPagesR struct {
+	number int
+	o      *PageTemplate
 }
 
 // Apply mods to the UserTemplate
@@ -56,8 +71,20 @@ func (o UserTemplate) toModel() *models.User {
 	if o.ID != nil {
 		m.ID = o.ID()
 	}
-	if o.Name != nil {
-		m.Name = o.Name()
+	if o.Username != nil {
+		m.Username = o.Username()
+	}
+	if o.Email != nil {
+		m.Email = o.Email()
+	}
+	if o.Password != nil {
+		m.Password = o.Password()
+	}
+	if o.CreatedAt != nil {
+		m.CreatedAt = o.CreatedAt()
+	}
+	if o.UpdatedAt != nil {
+		m.UpdatedAt = o.UpdatedAt()
 	}
 
 	return m
@@ -77,7 +104,20 @@ func (o UserTemplate) toModels(number int) models.UserSlice {
 
 // setModelRels creates and sets the relationships on *models.User
 // according to the relationships in the template. Nothing is inserted into the db
-func (t UserTemplate) setModelRels(o *models.User) {}
+func (t UserTemplate) setModelRels(o *models.User) {
+	if t.r.Pages != nil {
+		rel := models.PageSlice{}
+		for _, r := range t.r.Pages {
+			related := r.o.toModels(r.number)
+			for _, rel := range related {
+				rel.UserID = null.From(o.ID)
+				rel.R.User = o
+			}
+			rel = append(rel, related...)
+		}
+		o.R.Pages = rel
+	}
+}
 
 // BuildSetter returns an *models.UserSetter
 // this does nothing with the relationship templates
@@ -87,8 +127,20 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 	if o.ID != nil {
 		m.ID = omit.From(o.ID())
 	}
-	if o.Name != nil {
-		m.Name = omitnull.FromNull(o.Name())
+	if o.Username != nil {
+		m.Username = omitnull.FromNull(o.Username())
+	}
+	if o.Email != nil {
+		m.Email = omitnull.FromNull(o.Email())
+	}
+	if o.Password != nil {
+		m.Password = omitnull.FromNull(o.Password())
+	}
+	if o.CreatedAt != nil {
+		m.CreatedAt = omitnull.FromNull(o.CreatedAt())
+	}
+	if o.UpdatedAt != nil {
+		m.UpdatedAt = omitnull.FromNull(o.UpdatedAt())
 	}
 
 	return m
@@ -137,6 +189,21 @@ func ensureCreatableUser(m *models.UserSetter) {
 // any required relationship should have already exist on the model
 func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.User) (context.Context, error) {
 	var err error
+
+	if o.r.Pages != nil {
+		for _, r := range o.r.Pages {
+			var rel0 models.PageSlice
+			ctx, rel0, err = r.o.createMany(ctx, exec, r.number)
+			if err != nil {
+				return ctx, err
+			}
+
+			err = m.AttachPages(ctx, exec, rel0...)
+			if err != nil {
+				return ctx, err
+			}
+		}
+	}
 
 	return ctx, err
 }
@@ -198,7 +265,11 @@ type userMods struct{}
 func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 	return UserModSlice{
 		UserMods.RandomID(f),
-		UserMods.RandomName(f),
+		UserMods.RandomUsername(f),
+		UserMods.RandomEmail(f),
+		UserMods.RandomPassword(f),
+		UserMods.RandomCreatedAt(f),
+		UserMods.RandomUpdatedAt(f),
 	}
 }
 
@@ -246,44 +317,254 @@ func (m userMods) ensureID(f *faker.Faker) UserMod {
 }
 
 // Set the model columns to this value
-func (m userMods) Name(val null.Val[string]) UserMod {
+func (m userMods) Username(val null.Val[string]) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Name = func() null.Val[string] { return val }
+		o.Username = func() null.Val[string] { return val }
 	})
 }
 
 // Set the Column from the function
-func (m userMods) NameFunc(f func() null.Val[string]) UserMod {
+func (m userMods) UsernameFunc(f func() null.Val[string]) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Name = f
+		o.Username = f
 	})
 }
 
 // Clear any values for the column
-func (m userMods) UnsetName() UserMod {
+func (m userMods) UnsetUsername() UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Name = nil
+		o.Username = nil
 	})
 }
 
 // Generates a random value for the column using the given faker
 // if faker is nil, a default faker is used
-func (m userMods) RandomName(f *faker.Faker) UserMod {
+func (m userMods) RandomUsername(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		o.Name = func() null.Val[string] {
+		o.Username = func() null.Val[string] {
 			return randomNull[string](f)
 		}
 	})
 }
 
-func (m userMods) ensureName(f *faker.Faker) UserMod {
+func (m userMods) ensureUsername(f *faker.Faker) UserMod {
 	return UserModFunc(func(o *UserTemplate) {
-		if o.Name != nil {
+		if o.Username != nil {
 			return
 		}
 
-		o.Name = func() null.Val[string] {
+		o.Username = func() null.Val[string] {
 			return randomNull[string](f)
 		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) Email(val null.Val[string]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Email = func() null.Val[string] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) EmailFunc(f func() null.Val[string]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Email = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetEmail() UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Email = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomEmail(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Email = func() null.Val[string] {
+			return randomNull[string](f)
+		}
+	})
+}
+
+func (m userMods) ensureEmail(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		if o.Email != nil {
+			return
+		}
+
+		o.Email = func() null.Val[string] {
+			return randomNull[string](f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) Password(val null.Val[string]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Password = func() null.Val[string] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) PasswordFunc(f func() null.Val[string]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Password = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetPassword() UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Password = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomPassword(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.Password = func() null.Val[string] {
+			return randomNull[string](f)
+		}
+	})
+}
+
+func (m userMods) ensurePassword(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		if o.Password != nil {
+			return
+		}
+
+		o.Password = func() null.Val[string] {
+			return randomNull[string](f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) CreatedAt(val null.Val[time.Time]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.CreatedAt = func() null.Val[time.Time] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) CreatedAtFunc(f func() null.Val[time.Time]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.CreatedAt = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetCreatedAt() UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.CreatedAt = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomCreatedAt(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.CreatedAt = func() null.Val[time.Time] {
+			return randomNull[time.Time](f)
+		}
+	})
+}
+
+func (m userMods) ensureCreatedAt(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		if o.CreatedAt != nil {
+			return
+		}
+
+		o.CreatedAt = func() null.Val[time.Time] {
+			return randomNull[time.Time](f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) UpdatedAt(val null.Val[time.Time]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.UpdatedAt = func() null.Val[time.Time] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) UpdatedAtFunc(f func() null.Val[time.Time]) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.UpdatedAt = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetUpdatedAt() UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.UpdatedAt = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomUpdatedAt(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.UpdatedAt = func() null.Val[time.Time] {
+			return randomNull[time.Time](f)
+		}
+	})
+}
+
+func (m userMods) ensureUpdatedAt(f *faker.Faker) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		if o.UpdatedAt != nil {
+			return
+		}
+
+		o.UpdatedAt = func() null.Val[time.Time] {
+			return randomNull[time.Time](f)
+		}
+	})
+}
+
+func (m userMods) WithPages(number int, related *PageTemplate) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.r.Pages = []*userRPagesR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m userMods) WithNewPages(number int, mods ...PageMod) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		related := o.f.NewPage(mods...)
+		m.WithPages(number, related).Apply(o)
+	})
+}
+
+func (m userMods) AddPages(number int, related *PageTemplate) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.r.Pages = append(o.r.Pages, &userRPagesR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m userMods) AddNewPages(number int, mods ...PageMod) UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		related := o.f.NewPage(mods...)
+		m.AddPages(number, related).Apply(o)
+	})
+}
+
+func (m userMods) WithoutPages() UserMod {
+	return UserModFunc(func(o *UserTemplate) {
+		o.r.Pages = nil
 	})
 }

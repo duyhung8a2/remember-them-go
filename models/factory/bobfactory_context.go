@@ -11,7 +11,13 @@ import (
 
 type contextKey string
 
-var userCtx = newContextual[*models.User]("user")
+var (
+	blockCtx        = newContextual[*models.Block]("block")
+	pagePropertyCtx = newContextual[*models.PageProperty]("pageProperty")
+	pageTemplateCtx = newContextual[*models.PageTemplate]("pageTemplate")
+	pageCtx         = newContextual[*models.Page]("page")
+	userCtx         = newContextual[*models.User]("user")
+)
 
 // Contextual is a convienience wrapper around context.WithValue and context.Value
 type contextual[V any] struct {

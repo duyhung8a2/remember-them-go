@@ -4,11 +4,63 @@
 package factory
 
 type Factory struct {
-	baseUserMods UserModSlice
+	baseBlockMods        BlockModSlice
+	basePagePropertyMods PagePropertyModSlice
+	basePageTemplateMods PageTemplateModSlice
+	basePageMods         PageModSlice
+	baseUserMods         UserModSlice
 }
 
 func New() *Factory {
 	return &Factory{}
+}
+
+func (f *Factory) NewBlock(mods ...BlockMod) *BlockTemplate {
+	o := &BlockTemplate{f: f}
+
+	if f != nil {
+		f.baseBlockMods.Apply(o)
+	}
+
+	BlockModSlice(mods).Apply(o)
+
+	return o
+}
+
+func (f *Factory) NewPageProperty(mods ...PagePropertyMod) *PagePropertyTemplate {
+	o := &PagePropertyTemplate{f: f}
+
+	if f != nil {
+		f.basePagePropertyMods.Apply(o)
+	}
+
+	PagePropertyModSlice(mods).Apply(o)
+
+	return o
+}
+
+func (f *Factory) NewPageTemplate(mods ...PageTemplateMod) *PageTemplateTemplate {
+	o := &PageTemplateTemplate{f: f}
+
+	if f != nil {
+		f.basePageTemplateMods.Apply(o)
+	}
+
+	PageTemplateModSlice(mods).Apply(o)
+
+	return o
+}
+
+func (f *Factory) NewPage(mods ...PageMod) *PageTemplate {
+	o := &PageTemplate{f: f}
+
+	if f != nil {
+		f.basePageMods.Apply(o)
+	}
+
+	PageModSlice(mods).Apply(o)
+
+	return o
 }
 
 func (f *Factory) NewUser(mods ...UserMod) *UserTemplate {
@@ -21,6 +73,38 @@ func (f *Factory) NewUser(mods ...UserMod) *UserTemplate {
 	UserModSlice(mods).Apply(o)
 
 	return o
+}
+
+func (f *Factory) ClearBaseBlockMods() {
+	f.baseBlockMods = nil
+}
+
+func (f *Factory) AddBaseBlockMod(mods ...BlockMod) {
+	f.baseBlockMods = append(f.baseBlockMods, mods...)
+}
+
+func (f *Factory) ClearBasePagePropertyMods() {
+	f.basePagePropertyMods = nil
+}
+
+func (f *Factory) AddBasePagePropertyMod(mods ...PagePropertyMod) {
+	f.basePagePropertyMods = append(f.basePagePropertyMods, mods...)
+}
+
+func (f *Factory) ClearBasePageTemplateMods() {
+	f.basePageTemplateMods = nil
+}
+
+func (f *Factory) AddBasePageTemplateMod(mods ...PageTemplateMod) {
+	f.basePageTemplateMods = append(f.basePageTemplateMods, mods...)
+}
+
+func (f *Factory) ClearBasePageMods() {
+	f.basePageMods = nil
+}
+
+func (f *Factory) AddBasePageMod(mods ...PageMod) {
+	f.basePageMods = append(f.basePageMods, mods...)
 }
 
 func (f *Factory) ClearBaseUserMods() {

@@ -5,6 +5,7 @@ package factory
 
 import (
 	"strings"
+	"time"
 
 	"github.com/aarondl/opt/null"
 	"github.com/jaswdr/faker/v2"
@@ -69,6 +70,12 @@ func random[T any](f *faker.Faker) T {
 
 	case float64:
 		return any(f.Float64(10, -1_000_000, 1_000_000)).(T)
+
+	case time.Time:
+		year := time.Hour * 24 * 365
+		min := time.Now().Add(-1 * year)
+		max := time.Now().Add(year)
+		return any(f.Time().TimeBetween(min, max)).(T)
 
 	}
 }
