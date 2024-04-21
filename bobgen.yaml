@@ -1,2 +1,2 @@
 sqlite:
-  dsn: "database.db"
+  dsn: "db/database.db"
