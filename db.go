@@ -15,8 +15,14 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func ConnectDB(dbFile string) (*bob.DB, error) {
-	db, err := bob.Open(DBDriver, dbFile)
+const (
+	DBDriver     = "sqlite"
+	DBFile       = "db/database.db"
+	DBSchemaFile = "db/db_schema.sql"
+)
+
+func ConnectDB() (*bob.DB, error) {
+	db, err := bob.Open(DBDriver, DBFile)
 	if err != nil {
 		return nil, err
 	}
