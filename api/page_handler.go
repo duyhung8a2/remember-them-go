@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"remember_them/models"
@@ -28,10 +27,9 @@ type PageResponse struct {
 }
 
 func (b PageHandler) ListPages(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	pageTable := models.Pages
 
-	pages, err := pageTable.Query(ctx, b.db).All()
+	pages, err := pageTable.Query(r.Context(), b.db).All()
 	if err != nil {
 		http.Error(w, "Failed to retrieve pages", http.StatusInternalServerError)
 		return
