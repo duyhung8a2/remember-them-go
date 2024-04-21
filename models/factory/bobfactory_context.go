@@ -13,9 +13,9 @@ type contextKey string
 
 var (
 	blockCtx        = newContextual[*models.Block]("block")
+	pageCtx         = newContextual[*models.Page]("page")
 	pagePropertyCtx = newContextual[*models.PageProperty]("pageProperty")
 	pageTemplateCtx = newContextual[*models.PageTemplate]("pageTemplate")
-	pageCtx         = newContextual[*models.Page]("page")
 	userCtx         = newContextual[*models.User]("user")
 )
 

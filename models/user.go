@@ -38,18 +38,18 @@ type User struct {
 // This should almost always be used instead of []*User.
 type UserSlice []*User
 
-// Users contains methods to work with the users table
-var Users = sqlite.NewTablex[*User, UserSlice, *UserSetter]("", "users")
+// Users contains methods to work with the user table
+var Users = sqlite.NewTablex[*User, UserSlice, *UserSetter]("", "user")
 
-// UsersQuery is a query on the users table
+// UsersQuery is a query on the user table
 type UsersQuery = *sqlite.ViewQuery[*User, UserSlice]
 
-// UsersStmt is a prepared statment on users
+// UsersStmt is a prepared statment on user
 type UsersStmt = bob.QueryStmt[*User, UserSlice]
 
 // userR is where relationships are stored.
 type userR struct {
-	Pages PageSlice // fk_pages_0
+	Pages PageSlice // fk_page_0
 }
 
 // UserSetter is used for insert/upsert/update operations
@@ -230,12 +230,12 @@ var UserColumns = struct {
 	CreatedAt sqlite.Expression
 	UpdatedAt sqlite.Expression
 }{
-	ID:        sqlite.Quote("users", "id"),
-	Username:  sqlite.Quote("users", "username"),
-	Email:     sqlite.Quote("users", "email"),
-	Password:  sqlite.Quote("users", "password"),
-	CreatedAt: sqlite.Quote("users", "created_at"),
-	UpdatedAt: sqlite.Quote("users", "updated_at"),
+	ID:        sqlite.Quote("user", "id"),
+	Username:  sqlite.Quote("user", "username"),
+	Email:     sqlite.Quote("user", "email"),
+	Password:  sqlite.Quote("user", "password"),
+	CreatedAt: sqlite.Quote("user", "created_at"),
+	UpdatedAt: sqlite.Quote("user", "updated_at"),
 }
 
 type userWhere[Q sqlite.Filterable] struct {
@@ -361,7 +361,7 @@ func usersJoinPages[Q dialect.Joinable](ctx context.Context, typ string) bob.Mod
 	}
 }
 
-// Pages starts a query for related objects on pages
+// Pages starts a query for related objects on page
 func (o *User) Pages(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagesQuery {
 	return Pages.Query(ctx, exec, append(mods,
 		sm.Where(PageColumns.UserID.EQ(sqlite.Arg(o.ID))),

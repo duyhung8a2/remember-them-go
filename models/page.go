@@ -41,22 +41,22 @@ type Page struct {
 // This should almost always be used instead of []*Page.
 type PageSlice []*Page
 
-// Pages contains methods to work with the pages table
-var Pages = sqlite.NewTablex[*Page, PageSlice, *PageSetter]("", "pages")
+// Pages contains methods to work with the page table
+var Pages = sqlite.NewTablex[*Page, PageSlice, *PageSetter]("", "page")
 
-// PagesQuery is a query on the pages table
+// PagesQuery is a query on the page table
 type PagesQuery = *sqlite.ViewQuery[*Page, PageSlice]
 
-// PagesStmt is a prepared statment on pages
+// PagesStmt is a prepared statment on page
 type PagesStmt = bob.QueryStmt[*Page, PageSlice]
 
 // pageR is where relationships are stored.
 type pageR struct {
-	Blocks         BlockSlice        // fk_blocks_0
-	PageProperties PagePropertySlice // fk_page_properties_0
-	User           *User             // fk_pages_0
-	Parent         *Page             // fk_pages_1
-	ReverseParents PageSlice         // fk_pages_1__self_join_reverse
+	Blocks         BlockSlice        // fk_block_0
+	User           *User             // fk_page_0
+	Parent         *Page             // fk_page_1
+	ReverseParents PageSlice         // fk_page_1__self_join_reverse
+	PageProperties PagePropertySlice // fk_page_property_0
 }
 
 // PageSetter is used for insert/upsert/update operations
@@ -213,19 +213,19 @@ type pageColumnNames struct {
 
 type pageRelationshipJoins[Q dialect.Joinable] struct {
 	Blocks         bob.Mod[Q]
-	PageProperties bob.Mod[Q]
 	User           bob.Mod[Q]
 	Parent         bob.Mod[Q]
 	ReverseParents bob.Mod[Q]
+	PageProperties bob.Mod[Q]
 }
 
 func buildPageRelationshipJoins[Q dialect.Joinable](ctx context.Context, typ string) pageRelationshipJoins[Q] {
 	return pageRelationshipJoins[Q]{
 		Blocks:         pagesJoinBlocks[Q](ctx, typ),
-		PageProperties: pagesJoinPageProperties[Q](ctx, typ),
 		User:           pagesJoinUser[Q](ctx, typ),
 		Parent:         pagesJoinParent[Q](ctx, typ),
 		ReverseParents: pagesJoinReverseParents[Q](ctx, typ),
+		PageProperties: pagesJoinPageProperties[Q](ctx, typ),
 	}
 }
 
@@ -245,12 +245,12 @@ var PageColumns = struct {
 	CreatedAt sqlite.Expression
 	UpdatedAt sqlite.Expression
 }{
-	ID:        sqlite.Quote("pages", "id"),
-	Title:     sqlite.Quote("pages", "title"),
-	UserID:    sqlite.Quote("pages", "user_id"),
-	ParentID:  sqlite.Quote("pages", "parent_id"),
-	CreatedAt: sqlite.Quote("pages", "created_at"),
-	UpdatedAt: sqlite.Quote("pages", "updated_at"),
+	ID:        sqlite.Quote("page", "id"),
+	Title:     sqlite.Quote("page", "title"),
+	UserID:    sqlite.Quote("page", "user_id"),
+	ParentID:  sqlite.Quote("page", "parent_id"),
+	CreatedAt: sqlite.Quote("page", "created_at"),
+	UpdatedAt: sqlite.Quote("page", "updated_at"),
 }
 
 type pageWhere[Q sqlite.Filterable] struct {
@@ -376,14 +376,6 @@ func pagesJoinBlocks[Q dialect.Joinable](ctx context.Context, typ string) bob.Mo
 	}
 }
 
-func pagesJoinPageProperties[Q dialect.Joinable](ctx context.Context, typ string) bob.Mod[Q] {
-	return mods.QueryMods[Q]{
-		dialect.Join[Q](typ, PageProperties.NameAs(ctx)).On(
-			PagePropertyColumns.PageID.EQ(PageColumns.ID),
-		),
-	}
-}
-
 func pagesJoinUser[Q dialect.Joinable](ctx context.Context, typ string) bob.Mod[Q] {
 	return mods.QueryMods[Q]{
 		dialect.Join[Q](typ, Users.NameAs(ctx)).On(
@@ -408,7 +400,15 @@ func pagesJoinReverseParents[Q dialect.Joinable](ctx context.Context, typ string
 	}
 }
 
-// Blocks starts a query for related objects on blocks
+func pagesJoinPageProperties[Q dialect.Joinable](ctx context.Context, typ string) bob.Mod[Q] {
+	return mods.QueryMods[Q]{
+		dialect.Join[Q](typ, PageProperties.NameAs(ctx)).On(
+			PagePropertyColumns.PageID.EQ(PageColumns.ID),
+		),
+	}
+}
+
+// Blocks starts a query for related objects on block
 func (o *Page) Blocks(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) BlocksQuery {
 	return Blocks.Query(ctx, exec, append(mods,
 		sm.Where(BlockColumns.PageID.EQ(sqlite.Arg(o.ID))),
@@ -426,25 +426,7 @@ func (os PageSlice) Blocks(ctx context.Context, exec bob.Executor, mods ...bob.M
 	)...)
 }
 
-// PageProperties starts a query for related objects on page_properties
-func (o *Page) PageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagePropertiesQuery {
-	return PageProperties.Query(ctx, exec, append(mods,
-		sm.Where(PagePropertyColumns.PageID.EQ(sqlite.Arg(o.ID))),
-	)...)
-}
-
-func (os PageSlice) PageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagePropertiesQuery {
-	PKArgs := make([]bob.Expression, len(os))
-	for i, o := range os {
-		PKArgs[i] = sqlite.ArgGroup(o.ID)
-	}
-
-	return PageProperties.Query(ctx, exec, append(mods,
-		sm.Where(sqlite.Group(PagePropertyColumns.PageID).In(PKArgs...)),
-	)...)
-}
-
-// User starts a query for related objects on users
+// User starts a query for related objects on user
 func (o *Page) User(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
 	return Users.Query(ctx, exec, append(mods,
 		sm.Where(UserColumns.ID.EQ(sqlite.Arg(o.UserID))),
@@ -462,7 +444,7 @@ func (os PageSlice) User(ctx context.Context, exec bob.Executor, mods ...bob.Mod
 	)...)
 }
 
-// Parent starts a query for related objects on pages
+// Parent starts a query for related objects on page
 func (o *Page) Parent(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagesQuery {
 	return Pages.Query(ctx, exec, append(mods,
 		sm.Where(PageColumns.ID.EQ(sqlite.Arg(o.ParentID))),
@@ -480,7 +462,7 @@ func (os PageSlice) Parent(ctx context.Context, exec bob.Executor, mods ...bob.M
 	)...)
 }
 
-// ReverseParents starts a query for related objects on pages
+// ReverseParents starts a query for related objects on page
 func (o *Page) ReverseParents(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagesQuery {
 	return Pages.Query(ctx, exec, append(mods,
 		sm.Where(PageColumns.ParentID.EQ(sqlite.Arg(o.ID))),
@@ -498,6 +480,24 @@ func (os PageSlice) ReverseParents(ctx context.Context, exec bob.Executor, mods 
 	)...)
 }
 
+// PageProperties starts a query for related objects on page_property
+func (o *Page) PageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagePropertiesQuery {
+	return PageProperties.Query(ctx, exec, append(mods,
+		sm.Where(PagePropertyColumns.PageID.EQ(sqlite.Arg(o.ID))),
+	)...)
+}
+
+func (os PageSlice) PageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagePropertiesQuery {
+	PKArgs := make([]bob.Expression, len(os))
+	for i, o := range os {
+		PKArgs[i] = sqlite.ArgGroup(o.ID)
+	}
+
+	return PageProperties.Query(ctx, exec, append(mods,
+		sm.Where(sqlite.Group(PagePropertyColumns.PageID).In(PKArgs...)),
+	)...)
+}
+
 func (o *Page) Preload(name string, retrieved any) error {
 	if o == nil {
 		return nil
@@ -511,20 +511,6 @@ func (o *Page) Preload(name string, retrieved any) error {
 		}
 
 		o.R.Blocks = rels
-
-		for _, rel := range rels {
-			if rel != nil {
-				rel.R.Page = o
-			}
-		}
-		return nil
-	case "PageProperties":
-		rels, ok := retrieved.(PagePropertySlice)
-		if !ok {
-			return fmt.Errorf("page cannot load %T as %q", retrieved, name)
-		}
-
-		o.R.PageProperties = rels
 
 		for _, rel := range rels {
 			if rel != nil {
@@ -567,6 +553,20 @@ func (o *Page) Preload(name string, retrieved any) error {
 		for _, rel := range rels {
 			if rel != nil {
 				rel.R.ReverseParents = PageSlice{o}
+			}
+		}
+		return nil
+	case "PageProperties":
+		rels, ok := retrieved.(PagePropertySlice)
+		if !ok {
+			return fmt.Errorf("page cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.PageProperties = rels
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.Page = o
 			}
 		}
 		return nil
@@ -647,84 +647,12 @@ func (os PageSlice) LoadPageBlocks(ctx context.Context, exec bob.Executor, mods 
 	return nil
 }
 
-func ThenLoadPagePageProperties(queryMods ...bob.Mod[*dialect.SelectQuery]) sqlite.Loader {
-	return sqlite.Loader(func(ctx context.Context, exec bob.Executor, retrieved any) error {
-		loader, isLoader := retrieved.(interface {
-			LoadPagePageProperties(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
-		})
-		if !isLoader {
-			return fmt.Errorf("object %T cannot load PagePageProperties", retrieved)
-		}
-
-		err := loader.LoadPagePageProperties(ctx, exec, queryMods...)
-
-		// Don't cause an issue due to missing relationships
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-
-		return err
-	})
-}
-
-// LoadPagePageProperties loads the page's PageProperties into the .R struct
-func (o *Page) LoadPagePageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
-	if o == nil {
-		return nil
-	}
-
-	// Reset the relationship
-	o.R.PageProperties = nil
-
-	related, err := o.PageProperties(ctx, exec, mods...).All()
-	if err != nil {
-		return err
-	}
-
-	for _, rel := range related {
-		rel.R.Page = o
-	}
-
-	o.R.PageProperties = related
-	return nil
-}
-
-// LoadPagePageProperties loads the page's PageProperties into the .R struct
-func (os PageSlice) LoadPagePageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
-	if len(os) == 0 {
-		return nil
-	}
-
-	pageProperties, err := os.PageProperties(ctx, exec, mods...).All()
-	if err != nil {
-		return err
-	}
-
-	for _, o := range os {
-		o.R.PageProperties = nil
-	}
-
-	for _, o := range os {
-		for _, rel := range pageProperties {
-			if o.ID != rel.PageID {
-				continue
-			}
-
-			rel.R.Page = o
-
-			o.R.PageProperties = append(o.R.PageProperties, rel)
-		}
-	}
-
-	return nil
-}
-
 func PreloadPageUser(opts ...sqlite.PreloadOption) sqlite.Preloader {
 	return sqlite.Preload[*User, UserSlice](orm.Relationship{
 		Name: "User",
 		Sides: []orm.RelSide{
 			{
-				From: "pages",
+				From: "page",
 				To:   TableNames.Users,
 				ToExpr: func(ctx context.Context) bob.Expression {
 					return Users.Name(ctx)
@@ -812,7 +740,7 @@ func PreloadPageParent(opts ...sqlite.PreloadOption) sqlite.Preloader {
 		Name: "Parent",
 		Sides: []orm.RelSide{
 			{
-				From: "pages",
+				From: "page",
 				To:   TableNames.Pages,
 				ToExpr: func(ctx context.Context) bob.Expression {
 					return Pages.Name(ctx)
@@ -967,6 +895,78 @@ func (os PageSlice) LoadPageReverseParents(ctx context.Context, exec bob.Executo
 	return nil
 }
 
+func ThenLoadPagePageProperties(queryMods ...bob.Mod[*dialect.SelectQuery]) sqlite.Loader {
+	return sqlite.Loader(func(ctx context.Context, exec bob.Executor, retrieved any) error {
+		loader, isLoader := retrieved.(interface {
+			LoadPagePageProperties(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+		})
+		if !isLoader {
+			return fmt.Errorf("object %T cannot load PagePageProperties", retrieved)
+		}
+
+		err := loader.LoadPagePageProperties(ctx, exec, queryMods...)
+
+		// Don't cause an issue due to missing relationships
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+
+		return err
+	})
+}
+
+// LoadPagePageProperties loads the page's PageProperties into the .R struct
+func (o *Page) LoadPagePageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.PageProperties = nil
+
+	related, err := o.PageProperties(ctx, exec, mods...).All()
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.Page = o
+	}
+
+	o.R.PageProperties = related
+	return nil
+}
+
+// LoadPagePageProperties loads the page's PageProperties into the .R struct
+func (os PageSlice) LoadPagePageProperties(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	pageProperties, err := os.PageProperties(ctx, exec, mods...).All()
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		o.R.PageProperties = nil
+	}
+
+	for _, o := range os {
+		for _, rel := range pageProperties {
+			if o.ID != rel.PageID {
+				continue
+			}
+
+			rel.R.Page = o
+
+			o.R.PageProperties = append(o.R.PageProperties, rel)
+		}
+	}
+
+	return nil
+}
+
 func insertPageBlocks0(ctx context.Context, exec bob.Executor, blocks1 []*BlockSetter, page0 *Page) (BlockSlice, error) {
 	for i := range blocks1 {
 		blocks1[i].PageID = omit.From(page0.ID)
@@ -1025,72 +1025,6 @@ func (page0 *Page) AttachBlocks(ctx context.Context, exec bob.Executor, related 
 	}
 
 	page0.R.Blocks = append(page0.R.Blocks, blocks1...)
-
-	for _, rel := range related {
-		rel.R.Page = page0
-	}
-
-	return nil
-}
-
-func insertPagePageProperties0(ctx context.Context, exec bob.Executor, pageProperties1 []*PagePropertySetter, page0 *Page) (PagePropertySlice, error) {
-	for i := range pageProperties1 {
-		pageProperties1[i].PageID = omit.From(page0.ID)
-	}
-
-	ret, err := PageProperties.InsertMany(ctx, exec, pageProperties1...)
-	if err != nil {
-		return ret, fmt.Errorf("insertPagePageProperties0: %w", err)
-	}
-
-	return ret, nil
-}
-
-func attachPagePageProperties0(ctx context.Context, exec bob.Executor, count int, pageProperties1 PagePropertySlice, page0 *Page) (PagePropertySlice, error) {
-	setter := &PagePropertySetter{
-		PageID: omit.From(page0.ID),
-	}
-
-	err := PageProperties.Update(ctx, exec, setter, pageProperties1...)
-	if err != nil {
-		return nil, fmt.Errorf("attachPagePageProperties0: %w", err)
-	}
-
-	return pageProperties1, nil
-}
-
-func (page0 *Page) InsertPageProperties(ctx context.Context, exec bob.Executor, related ...*PagePropertySetter) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	pageProperties1, err := insertPagePageProperties0(ctx, exec, related, page0)
-	if err != nil {
-		return err
-	}
-
-	page0.R.PageProperties = append(page0.R.PageProperties, pageProperties1...)
-
-	for _, rel := range pageProperties1 {
-		rel.R.Page = page0
-	}
-	return nil
-}
-
-func (page0 *Page) AttachPageProperties(ctx context.Context, exec bob.Executor, related ...*PageProperty) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	pageProperties1 := PagePropertySlice(related)
-
-	_, err = attachPagePageProperties0(ctx, exec, len(related), pageProperties1, page0)
-	if err != nil {
-		return err
-	}
-
-	page0.R.PageProperties = append(page0.R.PageProperties, pageProperties1...)
 
 	for _, rel := range related {
 		rel.R.Page = page0
@@ -1252,6 +1186,72 @@ func (page0 *Page) AttachReverseParents(ctx context.Context, exec bob.Executor, 
 
 	for _, rel := range related {
 		rel.R.ReverseParents = append(rel.R.ReverseParents, page0)
+	}
+
+	return nil
+}
+
+func insertPagePageProperties0(ctx context.Context, exec bob.Executor, pageProperties1 []*PagePropertySetter, page0 *Page) (PagePropertySlice, error) {
+	for i := range pageProperties1 {
+		pageProperties1[i].PageID = omit.From(page0.ID)
+	}
+
+	ret, err := PageProperties.InsertMany(ctx, exec, pageProperties1...)
+	if err != nil {
+		return ret, fmt.Errorf("insertPagePageProperties0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachPagePageProperties0(ctx context.Context, exec bob.Executor, count int, pageProperties1 PagePropertySlice, page0 *Page) (PagePropertySlice, error) {
+	setter := &PagePropertySetter{
+		PageID: omit.From(page0.ID),
+	}
+
+	err := PageProperties.Update(ctx, exec, setter, pageProperties1...)
+	if err != nil {
+		return nil, fmt.Errorf("attachPagePageProperties0: %w", err)
+	}
+
+	return pageProperties1, nil
+}
+
+func (page0 *Page) InsertPageProperties(ctx context.Context, exec bob.Executor, related ...*PagePropertySetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	pageProperties1, err := insertPagePageProperties0(ctx, exec, related, page0)
+	if err != nil {
+		return err
+	}
+
+	page0.R.PageProperties = append(page0.R.PageProperties, pageProperties1...)
+
+	for _, rel := range pageProperties1 {
+		rel.R.Page = page0
+	}
+	return nil
+}
+
+func (page0 *Page) AttachPageProperties(ctx context.Context, exec bob.Executor, related ...*PageProperty) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	pageProperties1 := PagePropertySlice(related)
+
+	_, err = attachPagePageProperties0(ctx, exec, len(related), pageProperties1, page0)
+	if err != nil {
+		return err
+	}
+
+	page0.R.PageProperties = append(page0.R.PageProperties, pageProperties1...)
+
+	for _, rel := range related {
+		rel.R.Page = page0
 	}
 
 	return nil

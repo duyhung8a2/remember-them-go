@@ -49,19 +49,15 @@ type PageTemplate struct {
 
 type pageR struct {
 	Blocks         []*pageRBlocksR
-	PageProperties []*pageRPagePropertiesR
 	User           *pageRUserR
 	Parent         *pageRParentR
 	ReverseParents []*pageRReverseParentsR
+	PageProperties []*pageRPagePropertiesR
 }
 
 type pageRBlocksR struct {
 	number int
 	o      *BlockTemplate
-}
-type pageRPagePropertiesR struct {
-	number int
-	o      *PagePropertyTemplate
 }
 type pageRUserR struct {
 	o *UserTemplate
@@ -72,6 +68,10 @@ type pageRParentR struct {
 type pageRReverseParentsR struct {
 	number int
 	o      *PageTemplate
+}
+type pageRPagePropertiesR struct {
+	number int
+	o      *PagePropertyTemplate
 }
 
 // Apply mods to the PageTemplate
@@ -136,19 +136,6 @@ func (t PageTemplate) setModelRels(o *models.Page) {
 		o.R.Blocks = rel
 	}
 
-	if t.r.PageProperties != nil {
-		rel := models.PagePropertySlice{}
-		for _, r := range t.r.PageProperties {
-			related := r.o.toModels(r.number)
-			for _, rel := range related {
-				rel.PageID = o.ID
-				rel.R.Page = o
-			}
-			rel = append(rel, related...)
-		}
-		o.R.PageProperties = rel
-	}
-
 	if t.r.User != nil {
 		rel := t.r.User.o.toModel()
 		rel.R.Pages = append(rel.R.Pages, o)
@@ -174,6 +161,19 @@ func (t PageTemplate) setModelRels(o *models.Page) {
 			rel = append(rel, related...)
 		}
 		o.R.ReverseParents = rel
+	}
+
+	if t.r.PageProperties != nil {
+		rel := models.PagePropertySlice{}
+		for _, r := range t.r.PageProperties {
+			related := r.o.toModels(r.number)
+			for _, rel := range related {
+				rel.PageID = o.ID
+				rel.R.Page = o
+			}
+			rel = append(rel, related...)
+		}
+		o.R.PageProperties = rel
 	}
 }
 
@@ -269,28 +269,13 @@ func (o *PageTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 		}
 	}
 
-	if o.r.PageProperties != nil {
-		for _, r := range o.r.PageProperties {
-			var rel1 models.PagePropertySlice
-			ctx, rel1, err = r.o.createMany(ctx, exec, r.number)
-			if err != nil {
-				return ctx, err
-			}
-
-			err = m.AttachPageProperties(ctx, exec, rel1...)
-			if err != nil {
-				return ctx, err
-			}
-		}
-	}
-
 	if o.r.Parent != nil {
-		var rel3 *models.Page
-		ctx, rel3, err = o.r.Parent.o.create(ctx, exec)
+		var rel2 *models.Page
+		ctx, rel2, err = o.r.Parent.o.create(ctx, exec)
 		if err != nil {
 			return ctx, err
 		}
-		err = m.AttachParent(ctx, exec, rel3)
+		err = m.AttachParent(ctx, exec, rel2)
 		if err != nil {
 			return ctx, err
 		}
@@ -298,13 +283,28 @@ func (o *PageTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 
 	if o.r.ReverseParents != nil {
 		for _, r := range o.r.ReverseParents {
-			var rel4 models.PageSlice
+			var rel3 models.PageSlice
+			ctx, rel3, err = r.o.createMany(ctx, exec, r.number)
+			if err != nil {
+				return ctx, err
+			}
+
+			err = m.AttachReverseParents(ctx, exec, rel3...)
+			if err != nil {
+				return ctx, err
+			}
+		}
+	}
+
+	if o.r.PageProperties != nil {
+		for _, r := range o.r.PageProperties {
+			var rel4 models.PagePropertySlice
 			ctx, rel4, err = r.o.createMany(ctx, exec, r.number)
 			if err != nil {
 				return ctx, err
 			}
 
-			err = m.AttachReverseParents(ctx, exec, rel4...)
+			err = m.AttachPageProperties(ctx, exec, rel4...)
 			if err != nil {
 				return ctx, err
 			}
@@ -329,21 +329,21 @@ func (o *PageTemplate) create(ctx context.Context, exec bob.Executor) (context.C
 	opt := o.BuildSetter()
 	ensureCreatablePage(opt)
 
-	var rel2 *models.User
+	var rel1 *models.User
 	if o.r.User == nil {
 		var ok bool
-		rel2, ok = userCtx.Value(ctx)
+		rel1, ok = userCtx.Value(ctx)
 		if !ok {
 			PageMods.WithNewUser().Apply(o)
 		}
 	}
 	if o.r.User != nil {
-		ctx, rel2, err = o.r.User.o.create(ctx, exec)
+		ctx, rel1, err = o.r.User.o.create(ctx, exec)
 		if err != nil {
 			return ctx, nil, err
 		}
 	}
-	opt.UserID = omit.From(rel2.ID)
+	opt.UserID = omit.From(rel1.ID)
 
 	m, err := models.Pages.Insert(ctx, exec, opt)
 	if err != nil {
@@ -351,7 +351,7 @@ func (o *PageTemplate) create(ctx context.Context, exec bob.Executor) (context.C
 	}
 	ctx = pageCtx.WithValue(ctx, m)
 
-	m.R.User = rel2
+	m.R.User = rel1
 
 	ctx, err = o.insertOptRels(ctx, exec, m)
 	return ctx, m, err
@@ -737,44 +737,6 @@ func (m pageMods) WithoutBlocks() PageMod {
 	})
 }
 
-func (m pageMods) WithPageProperties(number int, related *PagePropertyTemplate) PageMod {
-	return PageModFunc(func(o *PageTemplate) {
-		o.r.PageProperties = []*pageRPagePropertiesR{{
-			number: number,
-			o:      related,
-		}}
-	})
-}
-
-func (m pageMods) WithNewPageProperties(number int, mods ...PagePropertyMod) PageMod {
-	return PageModFunc(func(o *PageTemplate) {
-		related := o.f.NewPageProperty(mods...)
-		m.WithPageProperties(number, related).Apply(o)
-	})
-}
-
-func (m pageMods) AddPageProperties(number int, related *PagePropertyTemplate) PageMod {
-	return PageModFunc(func(o *PageTemplate) {
-		o.r.PageProperties = append(o.r.PageProperties, &pageRPagePropertiesR{
-			number: number,
-			o:      related,
-		})
-	})
-}
-
-func (m pageMods) AddNewPageProperties(number int, mods ...PagePropertyMod) PageMod {
-	return PageModFunc(func(o *PageTemplate) {
-		related := o.f.NewPageProperty(mods...)
-		m.AddPageProperties(number, related).Apply(o)
-	})
-}
-
-func (m pageMods) WithoutPageProperties() PageMod {
-	return PageModFunc(func(o *PageTemplate) {
-		o.r.PageProperties = nil
-	})
-}
-
 func (m pageMods) WithReverseParents(number int, related *PageTemplate) PageMod {
 	return PageModFunc(func(o *PageTemplate) {
 		o.r.ReverseParents = []*pageRReverseParentsR{{
@@ -810,5 +772,43 @@ func (m pageMods) AddNewReverseParents(number int, mods ...PageMod) PageMod {
 func (m pageMods) WithoutReverseParents() PageMod {
 	return PageModFunc(func(o *PageTemplate) {
 		o.r.ReverseParents = nil
+	})
+}
+
+func (m pageMods) WithPageProperties(number int, related *PagePropertyTemplate) PageMod {
+	return PageModFunc(func(o *PageTemplate) {
+		o.r.PageProperties = []*pageRPagePropertiesR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m pageMods) WithNewPageProperties(number int, mods ...PagePropertyMod) PageMod {
+	return PageModFunc(func(o *PageTemplate) {
+		related := o.f.NewPageProperty(mods...)
+		m.WithPageProperties(number, related).Apply(o)
+	})
+}
+
+func (m pageMods) AddPageProperties(number int, related *PagePropertyTemplate) PageMod {
+	return PageModFunc(func(o *PageTemplate) {
+		o.r.PageProperties = append(o.r.PageProperties, &pageRPagePropertiesR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m pageMods) AddNewPageProperties(number int, mods ...PagePropertyMod) PageMod {
+	return PageModFunc(func(o *PageTemplate) {
+		related := o.f.NewPageProperty(mods...)
+		m.AddPageProperties(number, related).Apply(o)
+	})
+}
+
+func (m pageMods) WithoutPageProperties() PageMod {
+	return PageModFunc(func(o *PageTemplate) {
+		o.r.PageProperties = nil
 	})
 }

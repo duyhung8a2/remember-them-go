@@ -42,18 +42,18 @@ type Block struct {
 // This should almost always be used instead of []*Block.
 type BlockSlice []*Block
 
-// Blocks contains methods to work with the blocks table
-var Blocks = sqlite.NewTablex[*Block, BlockSlice, *BlockSetter]("", "blocks")
+// Blocks contains methods to work with the block table
+var Blocks = sqlite.NewTablex[*Block, BlockSlice, *BlockSetter]("", "block")
 
-// BlocksQuery is a query on the blocks table
+// BlocksQuery is a query on the block table
 type BlocksQuery = *sqlite.ViewQuery[*Block, BlockSlice]
 
-// BlocksStmt is a prepared statment on blocks
+// BlocksStmt is a prepared statment on block
 type BlocksStmt = bob.QueryStmt[*Block, BlockSlice]
 
 // blockR is where relationships are stored.
 type blockR struct {
-	Page *Page // fk_blocks_0
+	Page *Page // fk_block_0
 }
 
 // BlockSetter is used for insert/upsert/update operations
@@ -255,13 +255,13 @@ var BlockColumns = struct {
 	CreatedAt sqlite.Expression
 	UpdatedAt sqlite.Expression
 }{
-	ID:        sqlite.Quote("blocks", "id"),
-	PageID:    sqlite.Quote("blocks", "page_id"),
-	Type:      sqlite.Quote("blocks", "type"),
-	Content:   sqlite.Quote("blocks", "content"),
-	Position:  sqlite.Quote("blocks", "position"),
-	CreatedAt: sqlite.Quote("blocks", "created_at"),
-	UpdatedAt: sqlite.Quote("blocks", "updated_at"),
+	ID:        sqlite.Quote("block", "id"),
+	PageID:    sqlite.Quote("block", "page_id"),
+	Type:      sqlite.Quote("block", "type"),
+	Content:   sqlite.Quote("block", "content"),
+	Position:  sqlite.Quote("block", "position"),
+	CreatedAt: sqlite.Quote("block", "created_at"),
+	UpdatedAt: sqlite.Quote("block", "updated_at"),
 }
 
 type blockWhere[Q sqlite.Filterable] struct {
@@ -389,7 +389,7 @@ func blocksJoinPage[Q dialect.Joinable](ctx context.Context, typ string) bob.Mod
 	}
 }
 
-// Page starts a query for related objects on pages
+// Page starts a query for related objects on page
 func (o *Block) Page(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagesQuery {
 	return Pages.Query(ctx, exec, append(mods,
 		sm.Where(PageColumns.ID.EQ(sqlite.Arg(o.PageID))),
@@ -435,7 +435,7 @@ func PreloadBlockPage(opts ...sqlite.PreloadOption) sqlite.Preloader {
 		Name: "Page",
 		Sides: []orm.RelSide{
 			{
-				From: "blocks",
+				From: "block",
 				To:   TableNames.Pages,
 				ToExpr: func(ctx context.Context) bob.Expression {
 					return Pages.Name(ctx)

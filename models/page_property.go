@@ -41,18 +41,18 @@ type PageProperty struct {
 // This should almost always be used instead of []*PageProperty.
 type PagePropertySlice []*PageProperty
 
-// PageProperties contains methods to work with the page_properties table
-var PageProperties = sqlite.NewTablex[*PageProperty, PagePropertySlice, *PagePropertySetter]("", "page_properties")
+// PageProperties contains methods to work with the page_property table
+var PageProperties = sqlite.NewTablex[*PageProperty, PagePropertySlice, *PagePropertySetter]("", "page_property")
 
-// PagePropertiesQuery is a query on the page_properties table
+// PagePropertiesQuery is a query on the page_property table
 type PagePropertiesQuery = *sqlite.ViewQuery[*PageProperty, PagePropertySlice]
 
-// PagePropertiesStmt is a prepared statment on page_properties
+// PagePropertiesStmt is a prepared statment on page_property
 type PagePropertiesStmt = bob.QueryStmt[*PageProperty, PagePropertySlice]
 
 // pagePropertyR is where relationships are stored.
 type pagePropertyR struct {
-	Page *Page // fk_page_properties_0
+	Page *Page // fk_page_property_0
 }
 
 // PagePropertySetter is used for insert/upsert/update operations
@@ -233,12 +233,12 @@ var PagePropertyColumns = struct {
 	CreatedAt sqlite.Expression
 	UpdatedAt sqlite.Expression
 }{
-	ID:        sqlite.Quote("page_properties", "id"),
-	PageID:    sqlite.Quote("page_properties", "page_id"),
-	Name:      sqlite.Quote("page_properties", "name"),
-	Value:     sqlite.Quote("page_properties", "value"),
-	CreatedAt: sqlite.Quote("page_properties", "created_at"),
-	UpdatedAt: sqlite.Quote("page_properties", "updated_at"),
+	ID:        sqlite.Quote("page_property", "id"),
+	PageID:    sqlite.Quote("page_property", "page_id"),
+	Name:      sqlite.Quote("page_property", "name"),
+	Value:     sqlite.Quote("page_property", "value"),
+	CreatedAt: sqlite.Quote("page_property", "created_at"),
+	UpdatedAt: sqlite.Quote("page_property", "updated_at"),
 }
 
 type pagePropertyWhere[Q sqlite.Filterable] struct {
@@ -364,7 +364,7 @@ func pagePropertiesJoinPage[Q dialect.Joinable](ctx context.Context, typ string)
 	}
 }
 
-// Page starts a query for related objects on pages
+// Page starts a query for related objects on page
 func (o *PageProperty) Page(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) PagesQuery {
 	return Pages.Query(ctx, exec, append(mods,
 		sm.Where(PageColumns.ID.EQ(sqlite.Arg(o.PageID))),
@@ -410,7 +410,7 @@ func PreloadPagePropertyPage(opts ...sqlite.PreloadOption) sqlite.Preloader {
 		Name: "Page",
 		Sides: []orm.RelSide{
 			{
-				From: "page_properties",
+				From: "page_property",
 				To:   TableNames.Pages,
 				ToExpr: func(ctx context.Context) bob.Expression {
 					return Pages.Name(ctx)

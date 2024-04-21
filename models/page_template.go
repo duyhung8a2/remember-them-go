@@ -32,13 +32,13 @@ type PageTemplate struct {
 // This should almost always be used instead of []*PageTemplate.
 type PageTemplateSlice []*PageTemplate
 
-// PageTemplates contains methods to work with the page_templates table
-var PageTemplates = sqlite.NewTablex[*PageTemplate, PageTemplateSlice, *PageTemplateSetter]("", "page_templates")
+// PageTemplates contains methods to work with the page_template table
+var PageTemplates = sqlite.NewTablex[*PageTemplate, PageTemplateSlice, *PageTemplateSetter]("", "page_template")
 
-// PageTemplatesQuery is a query on the page_templates table
+// PageTemplatesQuery is a query on the page_template table
 type PageTemplatesQuery = *sqlite.ViewQuery[*PageTemplate, PageTemplateSlice]
 
-// PageTemplatesStmt is a prepared statment on page_templates
+// PageTemplatesStmt is a prepared statment on page_template
 type PageTemplatesStmt = bob.QueryStmt[*PageTemplate, PageTemplateSlice]
 
 // PageTemplateSetter is used for insert/upsert/update operations
@@ -180,11 +180,11 @@ var PageTemplateColumns = struct {
 	CreatedAt sqlite.Expression
 	UpdatedAt sqlite.Expression
 }{
-	ID:        sqlite.Quote("page_templates", "id"),
-	Name:      sqlite.Quote("page_templates", "name"),
-	Structure: sqlite.Quote("page_templates", "structure"),
-	CreatedAt: sqlite.Quote("page_templates", "created_at"),
-	UpdatedAt: sqlite.Quote("page_templates", "updated_at"),
+	ID:        sqlite.Quote("page_template", "id"),
+	Name:      sqlite.Quote("page_template", "name"),
+	Structure: sqlite.Quote("page_template", "structure"),
+	CreatedAt: sqlite.Quote("page_template", "created_at"),
+	UpdatedAt: sqlite.Quote("page_template", "updated_at"),
 }
 
 type pageTemplateWhere[Q sqlite.Filterable] struct {

@@ -5,9 +5,9 @@ package factory
 
 type Factory struct {
 	baseBlockMods        BlockModSlice
+	basePageMods         PageModSlice
 	basePagePropertyMods PagePropertyModSlice
 	basePageTemplateMods PageTemplateModSlice
-	basePageMods         PageModSlice
 	baseUserMods         UserModSlice
 }
 
@@ -23,6 +23,18 @@ func (f *Factory) NewBlock(mods ...BlockMod) *BlockTemplate {
 	}
 
 	BlockModSlice(mods).Apply(o)
+
+	return o
+}
+
+func (f *Factory) NewPage(mods ...PageMod) *PageTemplate {
+	o := &PageTemplate{f: f}
+
+	if f != nil {
+		f.basePageMods.Apply(o)
+	}
+
+	PageModSlice(mods).Apply(o)
 
 	return o
 }
@@ -51,18 +63,6 @@ func (f *Factory) NewPageTemplate(mods ...PageTemplateMod) *PageTemplateTemplate
 	return o
 }
 
-func (f *Factory) NewPage(mods ...PageMod) *PageTemplate {
-	o := &PageTemplate{f: f}
-
-	if f != nil {
-		f.basePageMods.Apply(o)
-	}
-
-	PageModSlice(mods).Apply(o)
-
-	return o
-}
-
 func (f *Factory) NewUser(mods ...UserMod) *UserTemplate {
 	o := &UserTemplate{f: f}
 
@@ -83,6 +83,14 @@ func (f *Factory) AddBaseBlockMod(mods ...BlockMod) {
 	f.baseBlockMods = append(f.baseBlockMods, mods...)
 }
 
+func (f *Factory) ClearBasePageMods() {
+	f.basePageMods = nil
+}
+
+func (f *Factory) AddBasePageMod(mods ...PageMod) {
+	f.basePageMods = append(f.basePageMods, mods...)
+}
+
 func (f *Factory) ClearBasePagePropertyMods() {
 	f.basePagePropertyMods = nil
 }
@@ -97,14 +105,6 @@ func (f *Factory) ClearBasePageTemplateMods() {
 
 func (f *Factory) AddBasePageTemplateMod(mods ...PageTemplateMod) {
 	f.basePageTemplateMods = append(f.basePageTemplateMods, mods...)
-}
-
-func (f *Factory) ClearBasePageMods() {
-	f.basePageMods = nil
-}
-
-func (f *Factory) AddBasePageMod(mods ...PageMod) {
-	f.basePageMods = append(f.basePageMods, mods...)
 }
 
 func (f *Factory) ClearBaseUserMods() {
