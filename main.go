@@ -7,7 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"remember_them/handlers"
+	"syscall"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // // Init database
@@ -30,18 +33,18 @@ import (
 // r.Mount("/pages", api.PageRoutes(pageHandler))
 
 func main() {
+	r := chi.NewRouter()
 	port := ":3000"
 	log.Printf("Server is running on port %s", port)
 
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
-	ph := handlers.NewProducts(l)
 
-	sm := http.NewServeMux()
-	sm.Handle("/", ph)
+	ph := handlers.NewProducts(l)
+	r.Mount("/", ph.Routes())
 
 	s := &http.Server{
 		Addr:         port,
-		Handler:      sm,
+		Handler:      r,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
@@ -54,14 +57,12 @@ func main() {
 		}
 	}()
 
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, os.Kill)
+	signal.Notify(sigChan, syscall.SIGTERM)
 
 	sig := <-sigChan
 	l.Println("Receive terminate, graceful shutdown", sig)
-
-	s.ListenAndServe()
 
 	// Wait requests to be finished then shutdown
 	tc, cancel := context.WithTimeout(context.Background(), 30*time.Second)
