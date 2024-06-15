@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0
 	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/httprate v0.9.0
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/google/go-cmp v0.6.0
 	github.com/jaswdr/faker/v2 v2.1.0
@@ -14,6 +15,7 @@ require (
 
 require (
 	github.com/aarondl/json v0.0.0-20221020222930-8b0db17ef1bf // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
