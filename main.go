@@ -14,6 +14,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	"github.com/knadh/koanf/parsers/dotenv"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 // // Init database
@@ -24,18 +28,22 @@ import (
 // defer bob.Close()
 // db.InitDB(bob)
 
-// r := chi.NewRouter()
-
-// r.Use(middleware.RequestID)
-// r.Use(middleware.RealIP)
-// r.Use(middleware.Logger)
-// r.Use(middleware.Recoverer)
-// r.Use(middleware.Timeout(60 * time.Second))
-
-// pageHandler := api.NewPageHandler(bob)
-// r.Mount("/pages", api.PageRoutes(pageHandler))
+var k = koanf.New(".")
 
 func main() {
+	l := log.New(os.Stdout, "product-api", log.LstdFlags)
+	// Load env from .env
+	if err := k.Load(file.Provider(".env"), dotenv.Parser()); err != nil {
+		l.Fatalf("Error loading .env file: %v", err)
+	}
+	//Load env from system
+	if err := k.Load(env.Provider("", ".", nil), nil); err != nil {
+		l.Fatalf("Error loading environment variables: %v", err)
+	}
+
+	port := ":" + k.String("SERVER_PORT")
+	log.Printf("Server is running on port %s", port)
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -52,11 +60,6 @@ func main() {
 				"message": "Too many request, please try again later",
 			})
 		})))
-
-	port := ":3000"
-	log.Printf("Server is running on port %s", port)
-
-	l := log.New(os.Stdout, "product-api", log.LstdFlags)
 
 	ph := handlers.NewProducts(l)
 	r.Mount("/", ph.Routes())

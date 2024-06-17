@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"remember_them/data"
@@ -25,43 +26,6 @@ func (p *Products) Routes() chi.Router {
 	r.With(p.MiddlewareProductValidation).Put("/{id}", p.updateProducts)
 	return r
 }
-
-// func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-// 	if r.Method == http.MethodGet {
-// 		p.getProducts(rw, r)
-// 		return
-// 	}
-// 	if r.Method == http.MethodPost {
-// 		p.addProduct(rw, r)
-// 		return
-// 	}
-// 	if r.Method == http.MethodPut {
-// 		re := regexp.MustCompile(`/([0-9]+)`)
-// 		g := re.FindAllStringSubmatch(r.URL.Path, -1)
-// 		if len(g) != 1 {
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		if len(g[0]) != 2 {
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		idString := g[0][1]
-// 		id, err := strconv.Atoi(idString)
-// 		if err != nil {
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		p.l.Println("Got ID:", id)
-// 		p.updateProducts(rw, r)
-// 	}
-
-// 	// catch all
-// 	rw.WriteHeader(http.StatusMethodNotAllowed)
-// }
 
 func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
@@ -112,6 +76,14 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 		err := prod.FromJSON(r.Body)
 		if err != nil {
 			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+		}
+
+		// Validate product
+		err = prod.Validate()
+		if err != nil {
+			p.l.Println("[ERROR] validating product", err)
+			http.Error(rw, fmt.Sprintf("Error validating product: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		// Add product to context
