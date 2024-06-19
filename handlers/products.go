@@ -1,3 +1,18 @@
+//	Package classification of Product API
+//
+//	Documentation for Product API
+//
+//	Schemes: http, https
+//	BasePath: /
+//	Version: 1.0.0
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+// swagger:meta
 package handlers
 
 import (
@@ -6,10 +21,17 @@ import (
 	"log"
 	"net/http"
 	"remember_them/data"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
+
+// A list of products return in the response
+// swagger:response productsResponse
+type ProductsResponse struct {
+	// All products in the system
+	// in: body
+	Body []data.Product 
+}
 
 type Products struct {
 	l *log.Logger
@@ -25,47 +47,6 @@ func (p *Products) Routes() chi.Router {
 	r.With(p.MiddlewareProductValidation).Post("/", p.addProduct)
 	r.With(p.MiddlewareProductValidation).Put("/{id}", p.updateProducts)
 	return r
-}
-
-func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
-	lp := data.GetProducts()
-	err := lp.ToJSON(rw)
-	if err != nil {
-		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
-	}
-}
-
-func (p *Products) addProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle POST product")
-
-	prod := r.Context().Value(KeyProduct{}).(*data.Product)
-
-	data.AddProduct(prod)
-}
-
-func (p *Products) updateProducts(rw http.ResponseWriter, r *http.Request) {
-	idString := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idString)
-	if err != nil {
-		http.Error(rw, "Invalid URI", http.StatusBadRequest)
-		return
-	}
-
-	p.l.Println("Got ID:", id)
-
-	prod := r.Context().Value(KeyProduct{}).(*data.Product)
-
-	err = data.UpdateProduct(id, prod)
-	if err == data.ErrorProductNotFound {
-		http.Error(rw, "Product not found", http.StatusNotFound)
-		return
-	}
-
-	if err != nil {
-		http.Error(rw, "Product not found", http.StatusInternalServerError)
-		return
-	}
 }
 
 type KeyProduct struct{}

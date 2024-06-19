@@ -1,0 +1,61 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    Product:
+        description: Product represents a product in the system
+        properties:
+            description:
+                description: The description of the product
+                format: string
+                type: string
+                x-go-name: Description
+            id:
+                description: The unique identifier of the product
+                format: int64
+                type: string
+                x-go-name: ID
+            name:
+                description: The name of the product
+                format: string
+                type: string
+                x-go-name: Name
+            price:
+                description: The price of the product
+                format: float
+                type: string
+                x-go-name: Price
+            sku:
+                description: The SKU of the product
+                format: string
+                type: string
+                x-go-name: SKU
+        type: object
+        x-go-package: remember_them/data
+info:
+    description: Documentation for Product API
+    title: of Product API
+    version: 1.0.0
+paths:
+    /products:
+        get:
+            description: Return a list of products
+            operationId: listProducts
+            responses:
+                "200":
+                    $ref: '#/responses/productsResponse'
+            tags:
+                - products
+produces:
+    - application/json
+responses:
+    productsResponse:
+        description: A list of products return in the response
+        schema:
+            items:
+                $ref: '#/definitions/Product'
+            type: array
+schemes:
+    - http
+    - https
+swagger: "2.0"

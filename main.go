@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"remember_them/handlers"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	redocMiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/knadh/koanf/parsers/dotenv"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
@@ -46,12 +48,12 @@ func main() {
 
 	r := chi.NewRouter()
 
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Compress(5))
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(chiMiddleware.RequestID)
+	r.Use(chiMiddleware.RealIP)
+	r.Use(chiMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
+	r.Use(chiMiddleware.Compress(5))
+	r.Use(chiMiddleware.Timeout(60 * time.Second))
 	r.Use(httprate.Limit(10, 1*time.Minute,
 		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -61,8 +63,19 @@ func main() {
 			})
 		})))
 
+	// Index handler
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
+	})
+
 	ph := handlers.NewProducts(l)
-	r.Mount("/", ph.Routes())
+	r.Mount("/products", ph.Routes())
+
+	options := redocMiddleware.RedocOpts{SpecURL: "/swagger.yaml"}
+	r.Mount("/docs", redocMiddleware.Redoc(options, nil))
+
+	workDir, _ := os.Getwd()
+	r.Mount("/swagger.yaml", http.FileServer(http.Dir(filepath.Join(workDir, "./"))))
 
 	s := &http.Server{
 		Addr:         port,
