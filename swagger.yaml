@@ -6,28 +6,20 @@ definitions:
         description: Product represents a product in the system
         properties:
             description:
-                description: The description of the product
-                format: string
                 type: string
                 x-go-name: Description
             id:
-                description: The unique identifier of the product
                 format: int64
-                type: string
+                type: integer
                 x-go-name: ID
             name:
-                description: The name of the product
-                format: string
                 type: string
                 x-go-name: Name
             price:
-                description: The price of the product
                 format: float
-                type: string
+                type: number
                 x-go-name: Price
             sku:
-                description: The SKU of the product
-                format: string
                 type: string
                 x-go-name: SKU
         type: object
@@ -46,9 +38,28 @@ paths:
                     $ref: '#/responses/productsResponse'
             tags:
                 - products
+    /products/{id}:
+        put:
+            description: Return a list of products
+            operationId: updateProduct
+            parameters:
+                - description: The ID of the product to update in database
+                  format: int64
+                  in: path
+                  name: id
+                  required: true
+                  type: integer
+                  x-go-name: ID
+            responses:
+                "201":
+                    $ref: '#/responses/noContent'
+            tags:
+                - products
 produces:
     - application/json
 responses:
+    noContent:
+        description: ""
     productsResponse:
         description: A list of products return in the response
         schema:

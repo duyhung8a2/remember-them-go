@@ -8,6 +8,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// swagger:route PUT /products/{id} products updateProduct
+// Return a list of products
+// Responses:
+// 201: noContent
+//
+// Update a product in database
 func (p *Products) updateProducts(rw http.ResponseWriter, r *http.Request) {
 	idString := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idString)

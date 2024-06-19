@@ -27,10 +27,23 @@ import (
 
 // A list of products return in the response
 // swagger:response productsResponse
-type ProductsResponse struct {
+type productsResponse struct {
 	// All products in the system
 	// in: body
 	Body []data.Product 
+}
+
+// swagger:response noContent
+type productsNoContentWrapper struct {
+	
+}
+
+// swagger:parameters updateProduct
+type productIDParameterWrapper struct {
+	// The ID of the product to update in database
+	// in: path
+	// required: true
+	ID int `json:"id"`
 }
 
 type Products struct {

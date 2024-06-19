@@ -9,40 +9,22 @@ import (
 
 	"github.com/go-playground/validator/v10"
 )
+
 // Product represents a product in the system
 // swagger:model
 type Product struct {
-	// The unique identifier of the product
-	// swagger:strfmt int64
-	ID int `json:"id"`
-	
-	// The name of the product
-	// swagger:strfmt string
-	Name string `json:"name"`
-	
-	// The description of the product
-	// swagger:strfmt string
-	Description string `json:"description"`
-	
-	// The price of the product
-	// swagger:strfmt float
-	Price float32 `json:"price"`
-	
-	// The SKU of the product
-	// swagger:strfmt string
-	SKU string `json:"sku"`
-	
-	// The creation timestamp of the product
-	// swagger:strfmt date-time
-	CreatedOn string `json:"-"`
-	
-	// The update timestamp of the product
-	// swagger:strfmt date-time
-	UpdatedOn string `json:"-"`
-	
-	// The deletion timestamp of the product
-	// swagger:strfmt date-time
-	DeletedOn string `json:"-"`
+	// The ID for this product
+	//
+	// required: true
+	// min: 1
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float32 `json:"price"`
+	SKU         string  `json:"sku"`
+	CreatedOn   string  `json:"-"`
+	UpdatedOn   string  `json:"-"`
+	DeletedOn   string  `json:"-"`
 }
 
 func (p *Product) FromJSON(r io.Reader) error {
